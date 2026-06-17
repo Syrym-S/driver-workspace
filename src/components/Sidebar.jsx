@@ -15,15 +15,17 @@ const links = [
     { label: "Текущий рейс", path: "/" },
     { label: "Мои рейсы", path: "/trips" },
     { label: "Профиль", path: "/profile" },
-    { label: "Мои машины", path: "/vehicles" },
+    //    { label: 'Мои машины', path: '/vehicles' },
     { label: "Положение", path: "/use" },
+    { label: "Подписание АВР и документов", path: "/documents" },
+    { label: "Тендеры", path: "/tenders" },
 ];
 
 export default function Sidebar({ open, setOpen }) {
     const content = (
         <Box sx={{ width: drawerWidth }}>
             <Toolbar>
-                <Typography variant="h6">Driver</Typography>
+                <Typography variant='h6'>Driver</Typography>
             </Toolbar>
 
             <List>
@@ -41,13 +43,13 @@ export default function Sidebar({ open, setOpen }) {
         </Box>
     );
 
-    console.log("Open:" ,open);
+    console.log("Open:", open);
 
     return (
         <>
             {/* MOBILE */}
             <Drawer
-                variant="temporary"
+                variant='temporary'
                 open={open}
                 onClose={() => setOpen(false)}
                 sx={{
@@ -62,7 +64,7 @@ export default function Sidebar({ open, setOpen }) {
 
             {/* DESKTOP */}
             <Drawer
-                variant="permanent"
+                variant='permanent'
                 open
                 sx={{
                     display: { xs: "none", md: "block" }, // 👈 ключевой момент
