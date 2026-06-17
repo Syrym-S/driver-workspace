@@ -1,7 +1,3 @@
-FTP_HOST=ftp.example.com
-FTP_PORT=21
-FTP_USER=my_user
-FTP_PASSWORD=my_password
 import dotenv from 'dotenv';
 import FtpDeploy from 'ftp-deploy';
 import { fileURLToPath } from 'url';
