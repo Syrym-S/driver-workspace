@@ -1,144 +1,219 @@
+import { useState } from 'react';
 import {
-  Alert,
-  Button,
-  Paper,
-  Typography,
-  Stack,
-  CircularProgress,
+    Alert,
+    Button,
+    CircularProgress,
+    Paper,
+    Stack,
+    Typography,
 } from '@mui/material';
 
-import { useState } from 'react';
-
 import { useApp } from '../../../app/context';
+import { acceptLead, startLead } from '../api/api';
 
-import {
-  acceptLead,
-  startLead,
-} from '../api/api';
+function normalizeStatus(status) {
+    return String(status || '').toLowerCase();
+}
 
-const Tool = ({ tripId }) => {
-  const {
-    openLead,
-    setOpenLead,
-  } = useApp();
+const statusLabels = {
+    new: 'Новый',
+    accepted: 'Принят',
+    started: 'Поездка начата',
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+    add_driver: 'Водитель назначен',
+    start_driver: 'Водитель выехал',
+    start_loading: 'Начало погрузки',
+    verification_loading: 'Погрузка подтверждена',
+    start_unloading: 'Начало разгрузки',
+    verification_unloading: 'Разгрузка подтверждена',
+    finished: 'Рейс завершён',
+};
 
-  const handleAccept = async () => {
-    try {
-      setLoading(true);
-      setError(false);
+const Tool = ({
+    tripId,
+    isCargoActionLoading = false,
+    onOpenStartLoading,
+    onOpenStartUnloading,
+}) => {
+    const { openLead, setOpenLead } = useApp();
 
-      await acceptLead({
-        lead_id: tripId,
-      });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
 
-      setOpenLead((prev) => ({
-        ...prev,
-        status: 'accepted',
-      }));
+    const status = normalizeStatus(openLead?.status);
 
-    } catch (e) {
-      console.error(e);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const canStartLoading =
+        status === 'start_driver' || status === 'start_loading';
 
-  const handleStart = async () => {
-    try {
-      setLoading(true);
-      setError(false);
+    const canStartUnloading =
+        status === 'verification_loading' || status === 'start_unloading';
 
-      await startLead({
-        lead_id: tripId,
-      });
+    const handleAccept = async () => {
+        try {
+            setLoading(true);
+            setError(false);
 
-      setOpenLead((prev) => ({
-        ...prev,
-        status: 'started',
-      }));
+            await acceptLead({
+                lead_id: tripId,
+            });
 
-    } catch (e) {
-      console.error(e);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+            setOpenLead((prev) => ({
+                ...prev,
+                status: 'accepted',
+            }));
+        } catch (e) {
+            console.error(e);
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <Paper
-      sx={{
-        p: 3,
-        borderRadius: 4,
-      }}
-    >
-      <Typography
-        variant="h6"
-        fontWeight={700}
-        mb={2}
-      >
-        Действия
-      </Typography>
+    const handleStart = async () => {
+        try {
+            setLoading(true);
+            setError(false);
 
-      <Stack spacing={2}>
-        {/* ERROR */}
-        {error && (
-          <Alert severity="error">
-            Не удалось выполнить действие.
-            Попробуйте ещё раз.
-          </Alert>
-        )}
+            await startLead({
+                lead_id: tripId,
+            });
 
-        {/* EMPTY */}
-        {!openLead?.status && (
-          <Alert severity="info">
-            Для текущего рейса пока нет доступных действий.
-          </Alert>
-        )}
+            setOpenLead((prev) => ({
+                ...prev,
+                status: 'started',
+            }));
+        } catch (e) {
+            console.error(e);
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        {/* NEW */}
-        {openLead?.status === 'new' && (
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={loading}
-            onClick={handleAccept}
-          >
-            {loading
-              ? <CircularProgress size={24} color="inherit" />
-              : 'Принять рейс'}
-          </Button>
-        )}
+    const hasActions =
+        status === 'new' ||
+        status === 'accepted' ||
+        canStartLoading ||
+        canStartUnloading;
+    return (
+        <Paper
+            sx={{
+                p: 3,
+                borderRadius: 4,
+            }}
+        >
+            <Typography variant='h6' fontWeight={700} mb={2}>
+                Действия
+            </Typography>
 
-        {/* ACCEPTED */}
-        {openLead?.status === 'accepted' && (
-          <Button
-            variant="contained"
-            color="success"
-            size="large"
-            disabled={loading}
-            onClick={handleStart}
-          >
-            {loading
-              ? <CircularProgress size={24} color="inherit" />
-              : 'Начать поездку'}
-          </Button>
-        )}
+            <Stack spacing={2}>
+                {error && (
+                    <Alert severity='error'>
+                        Не удалось выполнить действие. Попробуйте ещё раз.
+                    </Alert>
+                )}
 
-        {/* STARTED */}
-        {openLead?.status === 'started' && (
-          <Alert severity="success">
-            Поездка уже начата.
-          </Alert>
-        )}
-      </Stack>
-    </Paper>
-  );
+                {status === 'verification_unloading' && (
+                    <Alert severity='info'>
+                        Разгрузка подтверждена. Ожидайте завершения рейса
+                        экспедитором.
+                    </Alert>
+                )}
+
+                {status === 'finished' && (
+                    <Alert severity='success'>Рейс завершён.</Alert>
+                )}
+
+                {!hasActions &&
+                    status !== 'verification_unloading' &&
+                    status !== 'finished' &&
+                    openLead?.status && (
+                        <Alert severity='success'>
+                            Для текущего статуса нет доступных действий.
+                        </Alert>
+                    )}
+
+                {openLead?.status &&
+                    status !== 'verification_unloading' &&
+                    status !== 'finished' && (
+                        <Alert severity='info'>
+                            Текущий статус:{' '}
+                            {statusLabels[status] || openLead.status}
+                        </Alert>
+                    )}
+
+                {/* OLD FLOW */}
+                {status === 'new' && (
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        size='large'
+                        disabled={loading}
+                        onClick={handleAccept}
+                    >
+                        {loading ? (
+                            <CircularProgress size={24} color='inherit' />
+                        ) : (
+                            'Принять рейс'
+                        )}
+                    </Button>
+                )}
+
+                {status === 'accepted' && (
+                    <Button
+                        variant='contained'
+                        color='success'
+                        size='large'
+                        disabled={loading}
+                        onClick={handleStart}
+                    >
+                        {loading ? (
+                            <CircularProgress size={24} color='inherit' />
+                        ) : (
+                            'Начать поездку'
+                        )}
+                    </Button>
+                )}
+
+                {/* CARGO ACTIONS */}
+                {canStartLoading && (
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        size='large'
+                        disabled={isCargoActionLoading}
+                        onClick={onOpenStartLoading}
+                    >
+                        {isCargoActionLoading ? (
+                            <CircularProgress size={24} color='inherit' />
+                        ) : status === 'start_driver' ? (
+                            'Начать погрузку'
+                        ) : (
+                            'Добавить файлы загрузки'
+                        )}
+                    </Button>
+                )}
+
+                {canStartUnloading && (
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        size='large'
+                        disabled={isCargoActionLoading}
+                        onClick={onOpenStartUnloading}
+                    >
+                        {isCargoActionLoading ? (
+                            <CircularProgress size={24} color='inherit' />
+                        ) : status === 'verification_loading' ? (
+                            'Начать разгрузку'
+                        ) : (
+                            'Добавить файлы разгрузки'
+                        )}
+                    </Button>
+                )}
+            </Stack>
+        </Paper>
+    );
 };
 
 export default Tool;

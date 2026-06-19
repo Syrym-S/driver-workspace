@@ -27,3 +27,8 @@ export const tenderStatusStyles = {
         backgroundColor: "grey.100",
     },
 };
+
+export const tenderPublicationLabels = {
+    public: "Публичный",
+    private: "Приватный",
+};

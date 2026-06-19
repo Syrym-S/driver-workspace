@@ -1,4 +1,5 @@
 const DEFAULT_MIN_ANGLE_DEGREES = 5;
+const DEFAULT_MAX_SKIPPED_POINTS = 8;
 
 function toRadians(value) {
     return (value * Math.PI) / 180;
@@ -61,41 +62,48 @@ function isSameCoord(firstCoord, secondCoord) {
 }
 
 /**
- * Упрощает маршрут перед отрисовкой:
- * оставляет первую/последнюю точки и промежуточные точки,
- * где направление маршрута меняется минимум на minAngleDegrees.
+ * Упрощает маршрут перед отрисовкой на карте:
+ *
+ * Оставляет:
+ * - первую и последнюю точки маршрута;
+ * - точки, где локальный поворот >= minAngleDegrees;
+ * - каждую maxSkippedPoints-ю пропущенную точку, чтобы маршрут не схлопнулся в прямую;
  */
 export function simplifyRouteByAngle(
     coords,
     minAngleDegrees = DEFAULT_MIN_ANGLE_DEGREES,
+    maxSkippedPoints = DEFAULT_MAX_SKIPPED_POINTS,
 ) {
     if (!Array.isArray(coords) || coords.length <= 2) {
         return coords;
     }
 
     const simplifiedCoords = [coords[0]];
+    let skippedPointsCount = 0;
 
-    // anchorPoint — последняя точка, которую мы уже оставили на маршруте.
-    let anchorPoint = coords[0];
+    for (let index = 1; index < coords.length - 1; index += 1) {
+        const previousPoint = simplifiedCoords[simplifiedCoords.length - 1];
+        const candidatePoint = coords[index];
+        const nextPoint = coords[index + 1];
 
-    // candidatePoint — текущая точка-кандидат: оставить её или пропустить.
-    let candidatePoint = coords[1];
+        const incomingVector = getProjectedVector(
+            previousPoint,
+            candidatePoint,
+        );
+        const outgoingVector = getProjectedVector(candidatePoint, nextPoint);
 
-    for (let index = 2; index < coords.length; index++) {
-        const nextPoint = coords[index];
+        const angle = getAngleBetweenVectors(incomingVector, outgoingVector);
 
-        const candidateVector = getProjectedVector(anchorPoint, candidatePoint);
-        const nextVector = getProjectedVector(anchorPoint, nextPoint);
+        skippedPointsCount += 1;
 
-        const angle = getAngleBetweenVectors(candidateVector, nextVector);
+        const shouldKeepPoint =
+            angle >= minAngleDegrees || skippedPointsCount >= maxSkippedPoints;
 
-        // Если угол заметный, candidatePoint влияет на форму линии — оставляем.
-        if (angle >= minAngleDegrees) {
+        // Оставляем точку либо на заметном повороте, либо как контрольную точку после N пропусков
+        if (shouldKeepPoint) {
             simplifiedCoords.push(candidatePoint);
-            anchorPoint = candidatePoint;
+            skippedPointsCount = 0;
         }
-
-        candidatePoint = nextPoint;
     }
 
     const lastPoint = coords[coords.length - 1];

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     Paper,
     Typography,
@@ -21,7 +21,7 @@ import L from "leaflet";
 import polyline from "@mapbox/polyline";
 
 import { generateRoute } from "../api/api";
-import { simplifyRoute } from "../components/route.helpers";
+import { simplifyRouteByAngle } from "../components/route.helpers";
 
 // decode polyline
 const decodePolyline = (encoded) => {
@@ -36,7 +36,7 @@ const FitBounds = ({ coords }) => {
         if (coords.length) {
             map.fitBounds(L.latLngBounds(coords), { padding: [30, 30] });
         }
-    }, [coords]);
+    }, [coords, map]);
 
     return null;
 };
@@ -52,14 +52,17 @@ const endIcon = new L.Icon({
     iconSize: [28, 28],
 });
 
+const SHOULD_SIMPLIFY_ROUTE = true;
+
 const Map = ({ tripId }) => {
+    console.log("mappp");
     const [coords, setCoords] = useState([]);
     const [route, setRoute] = useState(null);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
 
-    const fetchRoute = async () => {
+    const fetchRoute = useCallback(async () => {
         try {
             setLoading(true);
             setError(false);
@@ -71,9 +74,17 @@ const Map = ({ tripId }) => {
                 const decoded = decodePolyline(
                     routeData.polyline.encodedPolyline,
                 );
-                const simplified = simplifyRoute(decoded, 5);
 
-                setCoords(simplified);
+                const nextCoords = SHOULD_SIMPLIFY_ROUTE
+                    ? simplifyRouteByAngle(decoded, 5, 8)
+                    : decoded;
+
+                console.log("route coords:", {
+                    original: decoded.length,
+                    rendered: nextCoords.length,
+                });
+
+                setCoords(nextCoords);
                 setRoute(routeData);
             }
         } catch (err) {
@@ -82,11 +93,25 @@ const Map = ({ tripId }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [tripId]);
 
     useEffect(() => {
-        if (tripId) fetchRoute();
-    }, [tripId]);
+        if (!tripId) {
+            return;
+        }
+
+        let isCancelled = false;
+
+        queueMicrotask(() => {
+            if (!isCancelled) {
+                fetchRoute();
+            }
+        });
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [tripId, fetchRoute]);
 
     return (
         <Paper
