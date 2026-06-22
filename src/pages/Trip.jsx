@@ -22,6 +22,7 @@ import {
 } from './Trip/api/cargo-action.api';
 import { StartLoadingModal } from './Tenders/components/tender-details/StartLoadingModal';
 import { StartUnloadingModal } from './Trip/components/StartUnloadingModal';
+import { startLead } from './MyTrips/api';
 
 const Trip = ({ activeId = null }) => {
     const { id: routeId } = useParams();
@@ -41,6 +42,8 @@ const Trip = ({ activeId = null }) => {
         useState(false);
     const [startUnloadingError, setStartUnloadingError] = useState('');
     const leadStatus = normalizeStatus(openLead?.status);
+    const [isStartLeadSubmitting, setIsStartLeadSubmitting] = useState(false);
+    const [startLeadError, setStartLeadError] = useState('');
 
     const canStartLoading =
         leadStatus === 'start_driver' || leadStatus === 'start_loading';
@@ -75,6 +78,33 @@ const Trip = ({ activeId = null }) => {
 
     function normalizeStatus(status) {
         return String(status || '').toLowerCase();
+    }
+
+    async function handleStartLead() {
+        if (!id) {
+            return false;
+        }
+
+        try {
+            setIsStartLeadSubmitting(true);
+            setStartLeadError('');
+
+            await startLead(id);
+
+            await fetchInfo();
+
+            return true;
+        } catch (error) {
+            setStartLeadError(
+                error.response?.data?.message ||
+                    error.message ||
+                    'Не удалось отправить статус "Водитель выехал"',
+            );
+
+            return false;
+        } finally {
+            setIsStartLeadSubmitting(false);
+        }
     }
 
     function handleOpenStartLoadingModal() {
@@ -371,6 +401,9 @@ const Trip = ({ activeId = null }) => {
                             isStartLoadingSubmitting ||
                             isStartUnloadingSubmitting
                         }
+                        isStartLeadLoading={isStartLeadSubmitting}
+                        startLeadError={startLeadError}
+                        onStartLead={handleStartLead}
                         onOpenStartLoading={handleOpenStartLoadingModal}
                         onOpenStartUnloading={handleOpenStartUnloadingModal}
                     />

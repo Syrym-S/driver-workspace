@@ -31,6 +31,9 @@ const statusLabels = {
 
 const Tool = ({
     tripId,
+    isStartLeadLoading = false,
+    startLeadError = '',
+    onStartLead,
     isCargoActionLoading = false,
     onOpenStartLoading,
     onOpenStartUnloading,
@@ -41,6 +44,7 @@ const Tool = ({
     const [error, setError] = useState(false);
 
     const status = normalizeStatus(openLead?.status);
+    const canStartDriver = status === 'add_driver';
 
     const canStartLoading =
         status === 'start_driver' || status === 'start_loading';
@@ -93,8 +97,10 @@ const Tool = ({
     const hasActions =
         status === 'new' ||
         status === 'accepted' ||
+        canStartDriver ||
         canStartLoading ||
         canStartUnloading;
+
     return (
         <Paper
             sx={{
@@ -111,6 +117,10 @@ const Tool = ({
                     <Alert severity='error'>
                         Не удалось выполнить действие. Попробуйте ещё раз.
                     </Alert>
+                )}
+
+                {startLeadError && (
+                    <Alert severity='error'>{startLeadError}</Alert>
                 )}
 
                 {status === 'verification_unloading' && (
@@ -171,6 +181,22 @@ const Tool = ({
                             <CircularProgress size={24} color='inherit' />
                         ) : (
                             'Начать поездку'
+                        )}
+                    </Button>
+                )}
+
+                {canStartDriver && (
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        size='large'
+                        disabled={isStartLeadLoading || !onStartLead}
+                        onClick={onStartLead}
+                    >
+                        {isStartLeadLoading ? (
+                            <CircularProgress size={24} color='inherit' />
+                        ) : (
+                            'Водитель выехал'
                         )}
                     </Button>
                 )}

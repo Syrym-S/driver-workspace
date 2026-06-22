@@ -41,26 +41,28 @@ const TripsItem = ({ trip, onStartLead, isStarting = false }) => {
                     ID: {trip.id} — {from} → {to} ({trip.currency})
                 </Typography>
 
-                {canStartLead ? (
+                <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
                     <Button
-                        variant='contained'
-                        color='primary'
-                        size='small'
-                        onClick={handleStartLead}
-                        disabled={isStarting}
-                    >
-                        {isStarting ? 'Отправляем...' : 'Водитель выехал'}
-                    </Button>
-                ) : (
-                    <Button
-                        variant='contained'
+                        variant='outlined'
                         color='primary'
                         size='small'
                         onClick={() => handleOpenTrip(trip.id)}
                     >
                         Посмотреть
                     </Button>
-                )}
+
+                    {canStartLead && (
+                        <Button
+                            variant='contained'
+                            color='primary'
+                            size='small'
+                            onClick={handleStartLead}
+                            disabled={isStarting}
+                        >
+                            {isStarting ? 'Отправляем...' : 'Водитель выехал'}
+                        </Button>
+                    )}
+                </Box>
             </Box>
 
             <Typography variant='body2' color='text.secondary'>
