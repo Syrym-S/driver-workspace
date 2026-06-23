@@ -46,11 +46,7 @@ export async function submitStartLoading({
     documents,
     shouldStartLoading = false,
 }) {
-    if (shouldStartLoading) {
-        await startLoadingLead(leadId);
-    }
-
-    return Promise.all(
+    const uploadedFiles = await Promise.all(
         documents.map((document) =>
             uploadCargoFile(leadId, {
                 file: document.file,
@@ -60,6 +56,12 @@ export async function submitStartLoading({
             }),
         ),
     );
+
+    if (shouldStartLoading) {
+        await startLoadingLead(leadId);
+    }
+
+    return uploadedFiles;
 }
 
 export async function startUnloadingLead(leadId) {
@@ -75,11 +77,7 @@ export async function submitStartUnloading({
     documents,
     shouldStartUnloading = false,
 }) {
-    if (shouldStartUnloading) {
-        await startUnloadingLead(leadId);
-    }
-
-    return Promise.all(
+    const uploadedFiles = await Promise.all(
         documents.map((document) =>
             uploadCargoFile(leadId, {
                 file: document.file,
@@ -89,4 +87,10 @@ export async function submitStartUnloading({
             }),
         ),
     );
+
+    if (shouldStartUnloading) {
+        await startUnloadingLead(leadId);
+    }
+
+    return uploadedFiles;
 }

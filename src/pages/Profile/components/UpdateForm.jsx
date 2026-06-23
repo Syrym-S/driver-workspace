@@ -51,7 +51,8 @@ export const UpdateForm = () => {
 
         is_foreigner: Boolean(user?.is_foreigner),
 
-        document_number: user?.document_number || '',
+        document_number:  user?.personDocumentNumber || '',
+        issue_country: user?.issue_country || user?.issueCountry || user?.personIssueCountry || '',
 
         issued_by: user?.issued_by || '',
 
@@ -80,7 +81,11 @@ export const UpdateForm = () => {
         }
 
         if (form.document_number) {
-            payload.document_number = normalizeText(form.document_number);
+            payload.personDocumentNumber  = normalizeText(form.document_number);
+        }
+
+        if (form.issue_country) {
+            payload.personIssueCountry  = normalizeText(form.issue_country);
         }
 
         if (form.issued_by) {
@@ -127,13 +132,36 @@ export const UpdateForm = () => {
             setError(false);
             setSuccess(false);
 
-            const payload = buildDriverProfilePayload(form);
+            const payload = buildDriverProfilePayload(form, isPasswordTouched);
             console.log('profile payload before update:', payload);
             await updateuser(payload);
 
             setUser((prev) => ({
                 ...prev,
-                ...form,
+                fio: form.fio,
+                email: form.email,
+                phone: form.phone,
+
+                iin: form.iin,
+                is_foreigner: form.is_foreigner,
+
+                personDocumentNumber: form.document_number,
+                personIssueCountry: form.issue_country,
+
+                issued_by: form.issued_by,
+                issued_date: form.issued_date,
+
+                is_ip: form.is_ip,
+
+                ip_name: form.ip_name,
+                ip_bin: form.ip_bin,
+                bin: form.ip_bin,
+                ip_bik: form.ip_bik,
+                bik: form.ip_bik,
+                ip_iik: form.ip_iik,
+                iik: form.ip_iik,
+                ip_legal_address: form.ip_legal_address,
+                legal_address: form.ip_legal_address,
             }));
 
             setSuccess(true);
@@ -157,7 +185,8 @@ export const UpdateForm = () => {
             iin: user.iin || '',
             is_foreigner: Boolean(user.is_foreigner),
 
-            document_number: user.document_number || '',
+            document_number:  user.personDocumentNumber || '',
+            issue_country: user.personIssueCountry || user.issue_country || user.issueCountry ||  '',
             issued_by: user.issued_by || '',
             issued_date: user.issued_date || '',
 
@@ -195,7 +224,8 @@ export const UpdateForm = () => {
                     iin: profile.iin || '',
                     is_foreigner: toBoolean(profile.is_foreigner),
 
-                    document_number: profile.document_number || '',
+                    document_number: profile.personDocumentNumber || '',
+                    issue_country: profile.issue_country || profile.issueCountry || profile.personIssueCountry || '',
                     issued_by: profile.issued_by || '',
                     issued_date: profile.issued_date || '',
 
@@ -373,7 +403,7 @@ export const UpdateForm = () => {
                 {/* DOCUMENTS ONLY NON FOREIGNERS */}
                 {!form.is_foreigner && (
                     <Grid container spacing={2}>
-                        <Grid item xs={12}>
+                        <Grid item xs={12} md={6}>
                             <TextField
                                 label='Номер документа'
                                 value={form.document_number}
@@ -382,6 +412,18 @@ export const UpdateForm = () => {
                                         'document_number',
                                         e.target.value,
                                     )
+                                }
+                                fullWidth
+                                size='small'
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label='Страна выдачи'
+                                value={form.issue_country}
+                                onChange={(e) =>
+                                    handleChange('issue_country', e.target.value)
                                 }
                                 fullWidth
                                 size='small'

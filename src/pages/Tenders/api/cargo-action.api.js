@@ -60,11 +60,7 @@ export async function submitTenderStartLoading({
     documents,
     shouldStartLoading = false,
 }) {
-    if (shouldStartLoading) {
-        await startLoadingLead(leadId);
-    }
-
-    return Promise.all(
+    const uploadedFiles = await Promise.all(
         documents.map((document) =>
             uploadCargoFile(leadId, {
                 file: document.file,
@@ -74,4 +70,10 @@ export async function submitTenderStartLoading({
             }),
         ),
     );
+
+    if (shouldStartLoading) {
+        await startLoadingLead(leadId);
+    }
+
+    return uploadedFiles;
 }
