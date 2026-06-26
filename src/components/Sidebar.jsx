@@ -6,19 +6,20 @@ import {
     Box,
     Toolbar,
     Typography,
-} from "@mui/material";
-import { Link } from "react-router-dom";
+} from '@mui/material';
+import { Link } from 'react-router-dom';
+import { Notifications } from './notifications/ui/Notifications';
 
 const drawerWidth = 240;
 
 const links = [
-    { label: "Текущий рейс", path: "/" },
-    { label: "Мои рейсы", path: "/trips" },
-    { label: "Профиль", path: "/profile" },
+    { label: 'Текущий рейс', path: '/' },
+    { label: 'Мои рейсы', path: '/trips' },
+    { label: 'Профиль', path: '/profile' },
     //    { label: 'Мои машины', path: '/vehicles' },
-    { label: "Положение", path: "/use" },
-    { label: "Подписание АВР и документов", path: "/documents" },
-    { label: "Тендеры", path: "/tenders" },
+    { label: 'Положение', path: '/use' },
+    { label: 'Подписание АВР и документов', path: '/documents' },
+    { label: 'Тендеры', path: '/tenders' },
 ];
 
 export default function Sidebar({ open, setOpen }) {
@@ -27,6 +28,8 @@ export default function Sidebar({ open, setOpen }) {
             <Toolbar>
                 <Typography variant='h6'>Driver</Typography>
             </Toolbar>
+
+            <Notifications />
 
             <List>
                 {links.map((link) => (
@@ -43,7 +46,7 @@ export default function Sidebar({ open, setOpen }) {
         </Box>
     );
 
-    console.log("Open:", open);
+    console.log('Open:', open);
 
     return (
         <>
@@ -53,8 +56,8 @@ export default function Sidebar({ open, setOpen }) {
                 open={open}
                 onClose={() => setOpen(false)}
                 sx={{
-                    display: { xs: "block", md: "none" },
-                    "& .MuiDrawer-paper": {
+                    display: { xs: 'block', md: 'none' },
+                    '& .MuiDrawer-paper': {
                         width: drawerWidth,
                     },
                 }}
@@ -67,10 +70,10 @@ export default function Sidebar({ open, setOpen }) {
                 variant='permanent'
                 open
                 sx={{
-                    display: { xs: "none", md: "block" }, // 👈 ключевой момент
-                    "& .MuiDrawer-paper": {
+                    display: { xs: 'none', md: 'block' }, // 👈 ключевой момент
+                    '& .MuiDrawer-paper': {
                         width: drawerWidth,
-                        boxSizing: "border-box",
+                        boxSizing: 'border-box',
                     },
                 }}
             >
