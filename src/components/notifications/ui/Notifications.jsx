@@ -23,14 +23,21 @@ import {
     normalizeNotificationsResponse,
 } from '../model/notifications.helpers';
 import {
-    fetchCustomerNotificationByIdApi,
-    fetchCustomerNotificationsApi,
+    fetchDriverNotificationByIdApi,
+    fetchDriverNotificationsApi,
 } from '../api/notifications.api';
 import { NotificationDetailsModal } from './NotificationDetailsModal';
 import {
     isNotificationWsConfigured,
     openNotificationWsConnection,
 } from '../lib/open-notification-ws-connection';
+
+import { NotificationsColumn } from './NotificationsColumn';
+import {
+    notifyRealtimeNotification,
+    REALTIME_NOTIFICATION_TOAST_OPEN_EVENT,
+} from '../model/notifications.store';
+import { publishNotificationDomainEvent } from '../model/notification-domain-events';
 
 export function Notifications() {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -43,6 +50,9 @@ export function Notifications() {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isDetailsLoading, setIsDetailsLoading] = useState(false);
     const [detailsError, setDetailsError] = useState('');
+
+    const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
+        useState(false);
 
     const notificationWsConnectionRef = useRef(null);
 
@@ -57,6 +67,15 @@ export function Notifications() {
         }
     }
 
+    function handleOpenNotificationsDrawer() {
+        handleCloseMenu();
+        setIsNotificationsDrawerOpen(true);
+    }
+
+    function handleCloseNotificationsDrawer() {
+        setIsNotificationsDrawerOpen(false);
+    }
+
     async function loadNotifications({ withLoader = false } = {}) {
         try {
             if (withLoader) {
@@ -65,7 +84,7 @@ export function Notifications() {
 
             setNotificationsError('');
 
-            const response = await fetchCustomerNotificationsApi();
+            const response = await fetchDriverNotificationsApi();
             const nextNotifications = normalizeNotificationsResponse(response);
 
             setNotifications(nextNotifications);
@@ -114,7 +133,7 @@ export function Notifications() {
             setIsDetailsLoading(true);
 
             const response =
-                await fetchCustomerNotificationByIdApi(notificationId);
+                await fetchDriverNotificationByIdApi(notificationId);
 
             const notificationDetails =
                 normalizeNotificationDetailsResponse(response);
@@ -147,7 +166,7 @@ export function Notifications() {
 
         async function loadInitialNotifications() {
             try {
-                const response = await fetchCustomerNotificationsApi();
+                const response = await fetchDriverNotificationsApi();
 
                 if (!isCancelled) {
                     setNotifications(normalizeNotificationsResponse(response));
@@ -228,6 +247,9 @@ export function Notifications() {
                         ...prevNotifications,
                     ];
                 });
+
+                notifyRealtimeNotification(notification);
+                publishNotificationDomainEvent(notification);
             },
         });
 
@@ -241,6 +263,36 @@ export function Notifications() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        function handleOpenRealtimeNotificationToast(event) {
+            const notification = event.detail?.notification;
+
+            if (!notification) {
+                return;
+            }
+
+            handleCloseMenu();
+            setDetailsError('');
+            setIsDetailsLoading(false);
+            setSelectedNotification(notification);
+            setIsDetailsOpen(true);
+        }
+
+        window.addEventListener(
+            REALTIME_NOTIFICATION_TOAST_OPEN_EVENT,
+            handleOpenRealtimeNotificationToast,
+        );
+
+        return () => {
+            window.removeEventListener(
+                REALTIME_NOTIFICATION_TOAST_OPEN_EVENT,
+                handleOpenRealtimeNotificationToast,
+            );
+        };
+    }, []);
+
+    const previewNotifications = notifications.slice(0, 7);
 
     return (
         <>
@@ -269,138 +321,181 @@ export function Notifications() {
                             maxWidth: 'calc(100vw - 32px)',
                             mt: 1,
                             borderRadius: 3,
+                            overflow: 'hidden',
                         },
                     },
                 }}
             >
-                <Box sx={{ px: 2, py: 1.5 }}>
-                    <Typography fontWeight={700}>Уведомления</Typography>
+                <Box
+                    sx={{
+                        maxHeight: {
+                            xs: 'calc(100vh - 96px)',
+                            sm: 520,
+                        },
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}
+                >
+                    <Box sx={{ px: 2, py: 1.5, flexShrink: 0 }}>
+                        <Typography fontWeight={700}>Уведомления</Typography>
 
-                    <Typography variant='body2' color='text.secondary'>
-                        Последние события по вашим заявкам и тендерам
-                    </Typography>
-                </Box>
+                        <Typography variant='body2' color='text.secondary'>
+                            Последние события по вашим заявкам и тендерам
+                        </Typography>
+                    </Box>
 
-                <Divider />
+                    <Divider />
 
-                {isNotificationsLoading ? (
                     <Box
                         sx={{
-                            py: 3,
-                            display: 'flex',
-                            justifyContent: 'center',
+                            flex: 1,
+                            minHeight: 0,
+                            overflowY: 'auto',
                         }}
                     >
-                        <CircularProgress size={24} />
-                    </Box>
-                ) : notificationsError ? (
-                    <Box sx={{ px: 2, py: 2 }}>
-                        <Alert severity='error'>{notificationsError}</Alert>
-                    </Box>
-                ) : notifications.length === 0 ? (
-                    <MenuItem disabled>
-                        <ListItemText
-                            primary='Уведомлений пока нет'
-                            secondary='Здесь будут отображаться новые события'
-                        />
-                    </MenuItem>
-                ) : (
-                    notifications.map((notification) => {
-                        const notificationId = getNotificationId(notification);
-                        const isUnread = isNotificationUnread(notification);
-
-                        return (
-                            <MenuItem
-                                key={notificationId}
-                                onClick={() =>
-                                    handleOpenNotificationDetails(notification)
-                                }
+                        {isNotificationsLoading ? (
+                            <Box
                                 sx={{
-                                    alignItems: 'flex-start',
-                                    gap: 1,
-                                    py: 1.25,
-                                    whiteSpace: 'normal',
-                                    backgroundColor: isUnread
-                                        ? 'rgba(25, 118, 210, 0.06)'
-                                        : 'transparent',
+                                    py: 3,
+                                    display: 'flex',
+                                    justifyContent: 'center',
                                 }}
                             >
-                                <Box
-                                    sx={{
-                                        width: 8,
-                                        height: 8,
-                                        mt: 0.75,
-                                        borderRadius: '50%',
-                                        backgroundColor: isUnread
-                                            ? 'primary.main'
-                                            : 'transparent',
-                                        flexShrink: 0,
-                                    }}
-                                />
-
+                                <CircularProgress size={24} />
+                            </Box>
+                        ) : notificationsError ? (
+                            <Box sx={{ px: 2, py: 2 }}>
+                                <Alert severity='error'>
+                                    {notificationsError}
+                                </Alert>
+                            </Box>
+                        ) : notifications.length === 0 ? (
+                            <MenuItem disabled>
                                 <ListItemText
-                                    primary={
-                                        <Typography
-                                            fontWeight={600}
-                                            sx={{ fontSize: 14 }}
-                                        >
-                                            {getNotificationTitle(notification)}
-                                        </Typography>
-                                    }
-                                    secondary={
-                                        <Box>
-                                            <Typography
-                                                component='span'
-                                                color='text.secondary'
-                                                sx={{
-                                                    display: 'block',
-                                                    fontSize: 13,
-                                                    lineHeight: 1.35,
-                                                }}
-                                            >
-                                                {getNotificationDescription(
-                                                    notification,
-                                                )}
-                                            </Typography>
-
-                                            <Typography
-                                                component='span'
-                                                color='text.disabled'
-                                                sx={{
-                                                    display: 'block',
-                                                    mt: 0.5,
-                                                    fontSize: 12,
-                                                }}
-                                            >
-                                                {formatNotificationDate(
-                                                    getNotificationCreatedAt(
-                                                        notification,
-                                                    ),
-                                                )}
-                                            </Typography>
-                                        </Box>
-                                    }
+                                    primary='Уведомлений пока нет'
+                                    secondary='Здесь будут отображаться новые события'
                                 />
                             </MenuItem>
-                        );
-                    })
-                )}
+                        ) : (
+                            previewNotifications.map((notification) => {
+                                const notificationId =
+                                    getNotificationId(notification);
+                                const isUnread =
+                                    isNotificationUnread(notification);
 
-                <Divider />
+                                return (
+                                    <MenuItem
+                                        key={notificationId}
+                                        onClick={() =>
+                                            handleOpenNotificationDetails(
+                                                notification,
+                                            )
+                                        }
+                                        sx={{
+                                            alignItems: 'flex-start',
+                                            gap: 1,
+                                            py: 1.25,
+                                            whiteSpace: 'normal',
+                                            backgroundColor: isUnread
+                                                ? 'rgba(25, 118, 210, 0.06)'
+                                                : 'transparent',
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                width: 8,
+                                                height: 8,
+                                                mt: 0.75,
+                                                borderRadius: '50%',
+                                                backgroundColor: isUnread
+                                                    ? 'primary.main'
+                                                    : 'transparent',
+                                                flexShrink: 0,
+                                            }}
+                                        />
 
-                <MenuItem onClick={handleCloseMenu}>
-                    <Typography
-                        color='primary.main'
-                        fontWeight={600}
+                                        <ListItemText
+                                            primary={
+                                                <Typography
+                                                    fontWeight={600}
+                                                    sx={{ fontSize: 14 }}
+                                                >
+                                                    {getNotificationTitle(
+                                                        notification,
+                                                    )}
+                                                </Typography>
+                                            }
+                                            secondary={
+                                                <Box>
+                                                    <Typography
+                                                        component='span'
+                                                        color='text.secondary'
+                                                        sx={{
+                                                            display: 'block',
+                                                            fontSize: 13,
+                                                            lineHeight: 1.35,
+                                                        }}
+                                                    >
+                                                        {getNotificationDescription(
+                                                            notification,
+                                                        )}
+                                                    </Typography>
+
+                                                    <Typography
+                                                        component='span'
+                                                        color='text.disabled'
+                                                        sx={{
+                                                            display: 'block',
+                                                            mt: 0.5,
+                                                            fontSize: 12,
+                                                        }}
+                                                    >
+                                                        {formatNotificationDate(
+                                                            getNotificationCreatedAt(
+                                                                notification,
+                                                            ),
+                                                        )}
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                        />
+                                    </MenuItem>
+                                );
+                            })
+                        )}
+                    </Box>
+
+                    <Divider />
+
+                    <MenuItem
+                        onClick={handleOpenNotificationsDrawer}
                         sx={{
-                            width: '100%',
-                            textAlign: 'center',
+                            flexShrink: 0,
+                            justifyContent: 'center',
+                            py: 1.25,
+                            backgroundColor: 'background.paper',
                         }}
                     >
-                        Смотреть все уведомления
-                    </Typography>
-                </MenuItem>
+                        <Typography
+                            color='primary.main'
+                            fontWeight={600}
+                            sx={{
+                                width: '100%',
+                                textAlign: 'center',
+                            }}
+                        >
+                            Смотреть все уведомления
+                        </Typography>
+                    </MenuItem>
+                </Box>
             </Menu>
+
+            <NotificationsColumn
+                open={isNotificationsDrawerOpen}
+                onClose={handleCloseNotificationsDrawer}
+                onOpenNotificationDetails={handleOpenNotificationDetails}
+                refreshKey={notifications.length}
+            />
 
             <NotificationDetailsModal
                 open={isDetailsOpen}

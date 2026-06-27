@@ -1,45 +1,36 @@
-import { Box, IconButton } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import { Outlet } from "react-router-dom";
-import { useState } from "react";
-import Sidebar from "../components/Sidebar";
+import { Box } from '@mui/material';
+import { Outlet } from 'react-router-dom';
+import { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import { Header } from '../components/Header/Header';
 
 const drawerWidth = 240;
 
 export default function Layout() {
-  const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(false);
 
-  return (
-    <Box sx={{ display: "flex" }}>
-      {/* Бургер */}
-      <IconButton
-        onClick={() => setOpen(true)}
-        sx={{
-          position: "fixed",
-          top: 10,
-          left: 10,
-          display: {
-            xs: open ? "none" : "block", // 👈 скрываем при открытии
-            md: "none",
-          },
-          zIndex: 1400,
-        }}
-      >
-        <MenuIcon />
-      </IconButton>
+    return (
+        <Box>
+            <Header onOpenSidebar={() => setOpen(true)} />
 
-      <Sidebar open={open} setOpen={setOpen} />
+            <Sidebar open={open} setOpen={setOpen} />
 
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 2,
-          ml: { md: `${drawerWidth}px` },
-        }}
-      >
-        <Outlet />
-      </Box>
-    </Box>
-  );
+            <Box
+                component='main'
+                sx={{
+                    ml: {
+                        xs: 0,
+                        md: `${drawerWidth}px`,
+                    },
+                    pt: 2,
+                    px: 2,
+                    pb: 2,
+                    minHeight: 'calc(100vh - 64px)',
+                    backgroundColor: 'background.default',
+                }}
+            >
+                <Outlet />
+            </Box>
+        </Box>
+    );
 }

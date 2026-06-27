@@ -8,15 +8,12 @@ import {
     Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { Notifications } from './notifications/ui/Notifications';
 
 const drawerWidth = 240;
 
 const links = [
     { label: 'Текущий рейс', path: '/' },
     { label: 'Мои рейсы', path: '/trips' },
-    { label: 'Профиль', path: '/profile' },
-    //    { label: 'Мои машины', path: '/vehicles' },
     { label: 'Положение', path: '/use' },
     { label: 'Подписание АВР и документов', path: '/documents' },
     { label: 'Тендеры', path: '/tenders' },
@@ -28,8 +25,6 @@ export default function Sidebar({ open, setOpen }) {
             <Toolbar>
                 <Typography variant='h6'>Driver</Typography>
             </Toolbar>
-
-            <Notifications />
 
             <List>
                 {links.map((link) => (
@@ -45,8 +40,6 @@ export default function Sidebar({ open, setOpen }) {
             </List>
         </Box>
     );
-
-    console.log('Open:', open);
 
     return (
         <>

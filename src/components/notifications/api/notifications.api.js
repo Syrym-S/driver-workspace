@@ -1,12 +1,20 @@
 import { api } from '../../../api/client';
 
-export async function fetchCustomerNotificationsApi() {
-    const response = await api.get('/driver/v1/notifications');
+export async function fetchDriverNotificationsApi({
+    page = 1,
+    perPage = 20,
+} = {}) {
+    const response = await api.get('/driver/v1/notifications', {
+        params: {
+            page,
+            per_page: perPage,
+        },
+    });
 
     return response.data;
 }
 
-export async function fetchCustomerNotificationByIdApi(notificationId) {
+export async function fetchDriverNotificationByIdApi(notificationId) {
     const response = await api.get(
         `/driver/v1/notifications/${encodeURIComponent(notificationId)}`,
     );
