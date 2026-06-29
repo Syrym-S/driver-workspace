@@ -68,9 +68,36 @@ export default function Profile() {
     }
 
     return (
-        <Stack spacing={3}>
-            <InviteForm />
-            <UpdateForm />
-        </Stack>
+        <Box
+            sx={{
+                width: '100%',
+                maxWidth: 900,
+                mx: 'auto',
+                px: {
+                    xs: 2,
+                    sm: 3,
+                    md: 0,
+                },
+                py: {
+                    xs: 2,
+                    md: 3,
+                },
+                boxSizing: 'border-box',
+            }}
+        >
+            <Stack
+                spacing={{
+                    xs: 2,
+                    md: 3,
+                }}
+                sx={{
+                    width: '100%',
+                    minWidth: 0,
+                }}
+            >
+                <InviteForm />
+                <UpdateForm />
+            </Stack>
+        </Box>
     );
 }

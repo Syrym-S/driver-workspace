@@ -20,6 +20,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import { Notifications } from '../notifications/ui/Notifications';
 import { logoutApi } from './api/logout.api';
+import { getCompactEmail } from '../../shared/helpers/helpers';
 
 export function Header({ onOpenSidebar }) {
     const [profileAnchorEl, setProfileAnchorEl] = useState(null);
@@ -32,6 +33,7 @@ export function Header({ onOpenSidebar }) {
 
     const isProfileMenuOpen = Boolean(profileAnchorEl);
     const userEmail = window?.APP_DATA?.user_email || 'Пользователь';
+    const userEmailLabel = getCompactEmail(userEmail);
 
     function blurActiveElement() {
         if (document.activeElement instanceof HTMLElement) {
@@ -150,6 +152,8 @@ export function Header({ onOpenSidebar }) {
                             alignItems: 'center',
                             gap: 1,
                             minWidth: 0,
+                            flexShrink: 1,
+                            ml: 'auto',
                         }}
                     >
                         <Notifications />
@@ -157,19 +161,43 @@ export function Header({ onOpenSidebar }) {
                         <Button
                             variant='outlined'
                             onClick={handleOpenProfileMenu}
+                            title={userEmail}
+                            aria-label={`Профиль пользователя ${userEmail}`}
                             sx={{
+                                minWidth: 0,
                                 maxWidth: {
-                                    xs: 140,
-                                    sm: 240,
+                                    xs: 112,
+                                    sm: 200,
+                                    md: 260,
+                                },
+                                px: {
+                                    xs: 1,
+                                    sm: 1.5,
                                 },
                                 textTransform: 'none',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
+                                flexShrink: 1,
                             }}
-                            title={userEmail}
                         >
-                            {userEmail}
+                            <Typography
+                                component='span'
+                                noWrap
+                                sx={{
+                                    display: 'block',
+                                    minWidth: 0,
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    fontSize: {
+                                        xs: 12,
+                                        sm: 14,
+                                    },
+                                    lineHeight: 1.4,
+                                }}
+                            >
+                                {userEmailLabel}
+                            </Typography>
                         </Button>
                     </Box>
                 </Box>

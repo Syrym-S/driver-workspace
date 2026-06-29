@@ -317,23 +317,31 @@ export function Notifications() {
                 slotProps={{
                     paper: {
                         sx: {
-                            width: 360,
-                            maxWidth: 'calc(100vw - 32px)',
+                            width: {
+                                xs: 'calc(100vw - 24px)',
+                                sm: 360,
+                            },
+                            maxWidth: 'calc(100vw - 24px)',
                             mt: 1,
                             borderRadius: 3,
                             overflow: 'hidden',
+                            maxHeight: {
+                                xs: 'calc(100dvh - 96px)',
+                                sm: 520,
+                            },
                         },
                     },
                 }}
             >
                 <Box
                     sx={{
-                        maxHeight: {
-                            xs: 'calc(100vh - 96px)',
-                            sm: 520,
-                        },
                         display: 'flex',
                         flexDirection: 'column',
+                        maxHeight: {
+                            xs: 'calc(100dvh - 96px)',
+                            sm: 520,
+                        },
+                        minHeight: 0,
                     }}
                 >
                     <Box sx={{ px: 2, py: 1.5, flexShrink: 0 }}>
@@ -348,9 +356,14 @@ export function Notifications() {
 
                     <Box
                         sx={{
-                            flex: 1,
+                            flex: '0 1 auto',
                             minHeight: 0,
+                            maxHeight: {
+                                xs: 'calc(100dvh - 220px)',
+                                sm: 360,
+                            },
                             overflowY: 'auto',
+                            WebkitOverflowScrolling: 'touch',
                         }}
                     >
                         {isNotificationsLoading ? (
@@ -474,6 +487,9 @@ export function Notifications() {
                             justifyContent: 'center',
                             py: 1.25,
                             backgroundColor: 'background.paper',
+                            position: 'sticky',
+                            bottom: 0,
+                            zIndex: 1,
                         }}
                     >
                         <Typography
@@ -482,6 +498,10 @@ export function Notifications() {
                             sx={{
                                 width: '100%',
                                 textAlign: 'center',
+                                fontSize: {
+                                    xs: 13,
+                                    sm: 14,
+                                },
                             }}
                         >
                             Смотреть все уведомления

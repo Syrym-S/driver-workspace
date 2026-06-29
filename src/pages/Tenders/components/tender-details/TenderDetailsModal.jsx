@@ -260,7 +260,16 @@ export function TenderDetailsModal({ open, tender, onClose }) {
         >
             <TenderDetailsHeader tender={currentTender} />
 
-            <DialogContent sx={{ px: 3 }}>
+            <DialogContent
+                sx={{
+                    px: {
+                        xs: 1.5,
+                        sm: 2,
+                        md: 3,
+                    },
+                    overflowX: 'hidden',
+                }}
+            >
                 {detailsError && (
                     <Alert severity='error' sx={{ mb: 2 }}>
                         {detailsError}

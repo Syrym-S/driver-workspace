@@ -19,9 +19,14 @@ const TripsList = ({
     return (
         <Box
             sx={{
+                width: '100%',
+                minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 2,
+                gap: {
+                    xs: 1.5,
+                    md: 2,
+                },
             }}
         >
             {data.results.map((trip) => (
@@ -38,14 +43,20 @@ const TripsList = ({
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    mt: 3,
+                    mt: {
+                        xs: 2,
+                        md: 3,
+                    },
                     width: '100%',
+                    overflowX: 'auto',
+                    pb: 0.5,
                 }}
             >
                 <Pagination
                     count={totalPages}
                     page={page}
                     onChange={(e, value) => onChangePage(value)}
+                    size='small'
                 />
             </Box>
         </Box>

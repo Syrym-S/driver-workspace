@@ -52,7 +52,18 @@ const MyTrips = () => {
     }, [page]);
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box
+            sx={{
+                width: '100%',
+                boxSizing: 'border-box',
+                p: {
+                    xs: 1.5,
+                    sm: 2,
+                    md: 3,
+                },
+                overflow: 'hidden',
+            }}
+        >
             <Typography variant='h5' sx={{ mb: 4 }}>
                 Мои поездки
             </Typography>

@@ -51,8 +51,12 @@ export const UpdateForm = () => {
 
         is_foreigner: Boolean(user?.is_foreigner),
 
-        document_number:  user?.personDocumentNumber || '',
-        issue_country: user?.issue_country || user?.issueCountry || user?.personIssueCountry || '',
+        document_number: user?.personDocumentNumber || '',
+        issue_country:
+            user?.issue_country ||
+            user?.issueCountry ||
+            user?.personIssueCountry ||
+            '',
 
         issued_by: user?.issued_by || '',
 
@@ -81,11 +85,11 @@ export const UpdateForm = () => {
         }
 
         if (form.document_number) {
-            payload.personDocumentNumber  = normalizeText(form.document_number);
+            payload.personDocumentNumber = normalizeText(form.document_number);
         }
 
         if (form.issue_country) {
-            payload.personIssueCountry  = normalizeText(form.issue_country);
+            payload.personIssueCountry = normalizeText(form.issue_country);
         }
 
         if (form.issued_by) {
@@ -185,8 +189,12 @@ export const UpdateForm = () => {
             iin: user.iin || '',
             is_foreigner: Boolean(user.is_foreigner),
 
-            document_number:  user.personDocumentNumber || '',
-            issue_country: user.personIssueCountry || user.issue_country || user.issueCountry ||  '',
+            document_number: user.personDocumentNumber || '',
+            issue_country:
+                user.personIssueCountry ||
+                user.issue_country ||
+                user.issueCountry ||
+                '',
             issued_by: user.issued_by || '',
             issued_date: user.issued_date || '',
 
@@ -225,7 +233,11 @@ export const UpdateForm = () => {
                     is_foreigner: toBoolean(profile.is_foreigner),
 
                     document_number: profile.personDocumentNumber || '',
-                    issue_country: profile.issue_country || profile.issueCountry || profile.personIssueCountry || '',
+                    issue_country:
+                        profile.issue_country ||
+                        profile.issueCountry ||
+                        profile.personIssueCountry ||
+                        '',
                     issued_by: profile.issued_by || '',
                     issued_date: profile.issued_date || '',
 
@@ -260,12 +272,15 @@ export const UpdateForm = () => {
                     xs: 2,
                     md: 3,
                 },
-
-                borderRadius: 4,
-
+                borderRadius: {
+                    xs: 2.5,
+                    md: 4,
+                },
                 width: '100%',
-
-                maxWidth: 900, // desktop width
+                maxWidth: 900,
+                mx: 'auto',
+                boxSizing: 'border-box',
+                overflow: 'hidden',
             }}
         >
             <Stack spacing={3}>
@@ -402,69 +417,70 @@ export const UpdateForm = () => {
 
                 {/* DOCUMENTS ONLY NON FOREIGNERS */}
                 {!form.is_foreigner && (
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label='Номер документа'
-                                value={form.document_number}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'document_number',
-                                        e.target.value,
-                                    )
-                                }
-                                fullWidth
-                                size='small'
-                            />
-                        </Grid>
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                                xs: '1fr',
+                                md: 'repeat(2, minmax(0, 1fr))',
+                            },
+                            gap: 2,
+                            width: '100%',
+                            minWidth: 0,
+                        }}
+                    >
+                        <TextField
+                            label='Номер документа'
+                            value={form.document_number}
+                            onChange={(e) =>
+                                handleChange('document_number', e.target.value)
+                            }
+                            fullWidth
+                            size='small'
+                        />
 
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label='Страна выдачи'
-                                value={form.issue_country}
-                                onChange={(e) =>
-                                    handleChange('issue_country', e.target.value)
-                                }
-                                fullWidth
-                                size='small'
-                            />
-                        </Grid>
+                        <TextField
+                            label='Страна выдачи'
+                            value={form.issue_country}
+                            onChange={(e) =>
+                                handleChange('issue_country', e.target.value)
+                            }
+                            fullWidth
+                            size='small'
+                        />
 
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                select
-                                label='Кем выдан'
-                                value={form.issued_by}
-                                onChange={(e) =>
-                                    handleChange('issued_by', e.target.value)
-                                }
-                                fullWidth
-                                size='small'
-                            >
-                                <MenuItem value='МВД'>МВД</MenuItem>
+                        <TextField
+                            select
+                            label='Кем выдан'
+                            value={form.issued_by}
+                            onChange={(e) =>
+                                handleChange('issued_by', e.target.value)
+                            }
+                            fullWidth
+                            size='small'
+                            sx={{
+                                minWidth: 0,
+                            }}
+                        >
+                            <MenuItem value='МВД'>МВД</MenuItem>
+                            <MenuItem value='МИД'>МИД</MenuItem>
+                            <MenuItem value='Нету'>Нету</MenuItem>
+                        </TextField>
 
-                                <MenuItem value='МИД'>МИД</MenuItem>
-
-                                <MenuItem value='Нету'>Нету</MenuItem>
-                            </TextField>
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                type='date'
-                                label='Дата выдачи'
-                                value={form.issued_date}
-                                onChange={(e) =>
-                                    handleChange('issued_date', e.target.value)
-                                }
-                                fullWidth
-                                size='small'
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
-                        </Grid>
-                    </Grid>
+                        <TextField
+                            type='date'
+                            label='Дата выдачи'
+                            value={form.issued_date}
+                            onChange={(e) =>
+                                handleChange('issued_date', e.target.value)
+                            }
+                            fullWidth
+                            size='small'
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    </Box>
                 )}
 
                 <Divider />
@@ -555,6 +571,16 @@ export const UpdateForm = () => {
                     size='large'
                     onClick={handleSubmit}
                     disabled={loading}
+                    sx={{
+                        width: {
+                            xs: '100%',
+                            sm: 'auto',
+                        },
+                        alignSelf: {
+                            xs: 'stretch',
+                            sm: 'flex-start',
+                        },
+                    }}
                 >
                     {loading ? (
                         <CircularProgress size={24} color='inherit' />

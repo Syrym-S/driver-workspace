@@ -30,7 +30,6 @@ export const InviteForm = () => {
             });
 
             setSuccess(true);
-
         } catch (e) {
             console.error(e);
             setError(true);
@@ -46,49 +45,61 @@ export const InviteForm = () => {
                     xs: 2,
                     md: 3,
                 },
-
-                borderRadius: 4,
-
+                borderRadius: {
+                    xs: 2.5,
+                    md: 4,
+                },
                 width: '100%',
-
-                maxWidth: 900, // desktop width
+                maxWidth: 900,
+                mx: 'auto',
+                boxSizing: 'border-box',
+                overflow: 'hidden',
             }}
         >
             <Stack spacing={2}>
-                <Typography
-                    variant="h6"
-                    fontWeight={700}
-                >
+                <Typography variant='h6' fontWeight={700}>
                     Код приглашения
                 </Typography>
 
                 {error && (
-                    <Alert severity="error">
+                    <Alert severity='error'>
                         Не удалось активировать приглашение.
                     </Alert>
                 )}
 
                 {success && (
-                    <Alert severity="success">
+                    <Alert severity='success'>
                         Приглашение успешно активировано.
                     </Alert>
                 )}
 
                 <TextField
-                    label="Invite code"
+                    label='Invite code'
                     value={invite}
                     onChange={(e) => setInvite(e.target.value)}
                     fullWidth
                 />
 
                 <Button
-                    variant="contained"
+                    variant='contained'
                     onClick={handleSubmit}
                     disabled={loading}
+                    sx={{
+                        width: {
+                            xs: '100%',
+                            sm: 'auto',
+                        },
+                        alignSelf: {
+                            xs: 'stretch',
+                            sm: 'flex-start',
+                        },
+                    }}
                 >
-                    {loading
-                        ? <CircularProgress size={24} color="inherit" />
-                        : 'Активировать'}
+                    {loading ? (
+                        <CircularProgress size={24} color='inherit' />
+                    ) : (
+                        'Активировать'
+                    )}
                 </Button>
             </Stack>
         </Paper>
