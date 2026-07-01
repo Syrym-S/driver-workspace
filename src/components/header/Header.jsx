@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
     Alert,
+    Avatar,
     Box,
     Button,
     Container,
@@ -21,12 +22,15 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { Notifications } from '../notifications/ui/Notifications';
 import { logoutApi } from './api/logout.api';
 import { getCompactEmail } from '../../shared/helpers/helpers';
+import { getUser } from '../../pages/Profile/api';
+import { PROFILE_PHOTO_UPDATED_EVENT } from '../../pages/Profile/model/profile-photo.helpers';
 
 export function Header({ onOpenSidebar }) {
     const [profileAnchorEl, setProfileAnchorEl] = useState(null);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isLogoutLoading, setIsLogoutLoading] = useState(false);
     const [logoutError, setLogoutError] = useState('');
+    const [profilePhoto, setProfilePhoto] = useState('');
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -85,7 +89,7 @@ export function Header({ onOpenSidebar }) {
 
             await logoutApi();
 
-            window.location.href = '/login';
+            window.location.href = '/auth';
         } catch (error) {
             setLogoutError(
                 error.response?.data?.message ||
@@ -97,6 +101,45 @@ export function Header({ onOpenSidebar }) {
             setIsLogoutLoading(false);
         }
     }
+
+    useEffect(() => {
+        let isCancelled = false;
+
+        async function loadProfileAvatar() {
+            try {
+                const response = await getUser();
+                const profile = response?.data || response;
+
+                if (!isCancelled) {
+                    setProfilePhoto(profile?.avatar || '');
+                }
+            } catch {
+                if (!isCancelled) {
+                    setProfilePhoto('');
+                }
+            }
+        }
+
+        function handleProfilePhotoUpdated(event) {
+            setProfilePhoto(event.detail?.photoUrl || '');
+        }
+
+        loadProfileAvatar();
+
+        window.addEventListener(
+            PROFILE_PHOTO_UPDATED_EVENT,
+            handleProfilePhotoUpdated,
+        );
+
+        return () => {
+            isCancelled = true;
+
+            window.removeEventListener(
+                PROFILE_PHOTO_UPDATED_EVENT,
+                handleProfilePhotoUpdated,
+            );
+        };
+    }, []);
 
     return (
         <Box
@@ -166,19 +209,36 @@ export function Header({ onOpenSidebar }) {
                             sx={{
                                 minWidth: 0,
                                 maxWidth: {
-                                    xs: 112,
-                                    sm: 200,
-                                    md: 260,
+                                    xs: 140,
+                                    sm: 220,
+                                    md: 280,
                                 },
                                 px: {
-                                    xs: 1,
-                                    sm: 1.5,
+                                    xs: 0.75,
+                                    sm: 1.25,
                                 },
                                 textTransform: 'none',
                                 overflow: 'hidden',
                                 flexShrink: 1,
+                                gap: 0.75,
                             }}
                         >
+                            <Avatar
+                                src={profilePhoto || undefined}
+                                sx={{
+                                    width: {
+                                        xs: 24,
+                                        sm: 28,
+                                    },
+                                    height: {
+                                        xs: 24,
+                                        sm: 28,
+                                    },
+                                    fontSize: 13,
+                                    flexShrink: 0,
+                                }}
+                            />
+
                             <Typography
                                 component='span'
                                 noWrap

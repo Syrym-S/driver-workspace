@@ -19,3 +19,28 @@ export const updateuser = async (payload) => {
 
     return response.data;
 };
+
+export const uploadDriverAvatar = async (file) => {
+    const formData = new FormData();
+
+    formData.append('file', file);
+    formData.append('name', file.name);
+
+    const response = await api.post(
+        '/driver/profile/v1/avatar/upload',
+        formData,
+        {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        },
+    );
+
+    return response.data;
+};
+
+export async function deleteDriverAvatar() {
+    const response = await api.delete('/driver/profile/v1/avatar');
+
+    return response.data;
+}

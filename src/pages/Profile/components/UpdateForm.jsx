@@ -18,7 +18,17 @@ import {
 
 import { useApp } from '../../../app/context';
 
-import { getUser, updateuser } from '../api';
+import {
+    deleteDriverAvatar,
+    getUser,
+    updateuser,
+    uploadDriverAvatar,
+} from '../api';
+import {
+    getAvatarFromUploadResponse,
+    notifyProfilePhotoUpdated,
+} from '../model/profile-photo.helpers';
+import { ProfilePhotoUploader } from './ProfilePhotoUploader';
 
 function onlyDigits(value) {
     return String(value ?? '').replace(/\D/g, '');
@@ -28,10 +38,6 @@ function normalizeText(value) {
     return String(value ?? '').trim();
 }
 
-function toBoolean(value) {
-    return value === true || value === 1 || value === '1' || value === 'true';
-}
-
 export const UpdateForm = () => {
     const { user, setUser } = useApp();
 
@@ -39,6 +45,11 @@ export const UpdateForm = () => {
     const [error, setError] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isPasswordTouched, setIsPasswordTouched] = useState(false);
+    const [profilePhoto, setProfilePhoto] = useState(user?.avatar || '');
+    const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+    const [profilePhotoError, setProfilePhotoError] = useState('');
+    const [shouldDeleteProfilePhoto, setShouldDeleteProfilePhoto] =
+        useState(false);
 
     const [form, setForm] = useState({
         fio: user?.fio || '',
@@ -136,38 +147,74 @@ export const UpdateForm = () => {
             setError(false);
             setSuccess(false);
 
+            if (profilePhotoError) {
+                return;
+            }
+
             const payload = buildDriverProfilePayload(form, isPasswordTouched);
-            console.log('profile payload before update:', payload);
+
+            const hasPhotoUpload = Boolean(profilePhotoFile);
+            const hasPhotoDelete = shouldDeleteProfilePhoto;
+
             await updateuser(payload);
 
-            setUser((prev) => ({
-                ...prev,
-                fio: form.fio,
-                email: form.email,
-                phone: form.phone,
+            let nextAvatar = profilePhoto;
 
-                iin: form.iin,
-                is_foreigner: form.is_foreigner,
+            if (hasPhotoDelete) {
+                await deleteDriverAvatar();
 
-                personDocumentNumber: form.document_number,
-                personIssueCountry: form.issue_country,
+                nextAvatar = '';
 
-                issued_by: form.issued_by,
-                issued_date: form.issued_date,
+                notifyProfilePhotoUpdated('');
+            }
 
-                is_ip: form.is_ip,
+            if (hasPhotoUpload) {
+                const uploadResponse =
+                    await uploadDriverAvatar(profilePhotoFile);
+                const profileResponse = await getUser();
+                const updatedProfile = profileResponse?.data || profileResponse;
 
-                ip_name: form.ip_name,
-                ip_bin: form.ip_bin,
-                bin: form.ip_bin,
-                ip_bik: form.ip_bik,
-                bik: form.ip_bik,
-                ip_iik: form.ip_iik,
-                iik: form.ip_iik,
-                ip_legal_address: form.ip_legal_address,
-                legal_address: form.ip_legal_address,
-            }));
+                nextAvatar =
+                    updatedProfile?.avatar ||
+                    getAvatarFromUploadResponse(uploadResponse, profilePhoto);
 
+                notifyProfilePhotoUpdated(nextAvatar);
+                setUser(updatedProfile);
+            } else {
+                setUser((prev) => ({
+                    ...prev,
+                    fio: form.fio,
+                    email: form.email,
+                    phone: form.phone,
+
+                    iin: form.iin,
+                    is_foreigner: form.is_foreigner,
+
+                    personDocumentNumber: form.document_number,
+                    personIssueCountry: form.issue_country,
+
+                    issued_by: form.issued_by,
+                    issued_date: form.issued_date,
+
+                    is_ip: form.is_ip,
+
+                    ip_name: form.ip_name,
+                    ip_bin: form.ip_bin,
+                    bin: form.ip_bin,
+                    ip_bik: form.ip_bik,
+                    bik: form.ip_bik,
+                    ip_iik: form.ip_iik,
+                    iik: form.ip_iik,
+                    ip_legal_address: form.ip_legal_address,
+                    legal_address: form.ip_legal_address,
+
+                    avatar: nextAvatar,
+                }));
+            }
+
+            setProfilePhoto(nextAvatar);
+            setProfilePhotoFile(null);
+            setShouldDeleteProfilePhoto(false);
             setSuccess(true);
         } catch (e) {
             console.error(e);
@@ -209,53 +256,26 @@ export const UpdateForm = () => {
             password: '',
             password_confirm: '',
         }));
-    }, [user]);
+
+        if (!profilePhotoFile && !shouldDeleteProfilePhoto) {
+            setProfilePhoto(user.avatar || '');
+        }
+    }, [user, profilePhotoFile, shouldDeleteProfilePhoto]);
 
     useEffect(() => {
         let isMounted = true;
 
         async function loadProfile() {
-            try {
-                const profile = await getUser();
+            const profileResponse = await getUser();
+            const profile = profileResponse?.data || profileResponse;
 
-                if (!isMounted) return;
+            if (!isMounted) return;
 
-                setUser(profile);
-
-                setForm((prev) => ({
-                    ...prev,
-                    fio: profile.fio || '',
-                    email:
-                        typeof profile.email === 'string' ? profile.email : '',
-                    phone: profile.phone || '',
-
-                    iin: profile.iin || '',
-                    is_foreigner: toBoolean(profile.is_foreigner),
-
-                    document_number: profile.personDocumentNumber || '',
-                    issue_country:
-                        profile.issue_country ||
-                        profile.issueCountry ||
-                        profile.personIssueCountry ||
-                        '',
-                    issued_by: profile.issued_by || '',
-                    issued_date: profile.issued_date || '',
-
-                    is_ip: toBoolean(profile.is_ip),
-
-                    ip_name: profile.ip_name || '',
-                    ip_bin: profile.ip_bin || profile.bin || '',
-                    ip_bik: profile.ip_bik || profile.bik || '',
-                    ip_iik: profile.ip_iik || profile.iik || '',
-                    ip_legal_address:
-                        profile.ip_legal_address || profile.legal_address || '',
-
-                    password: '',
-                    password_confirm: '',
-                }));
-            } catch (error) {
-                console.error('Не удалось загрузить профиль водителя:', error);
-            }
+            setUser(profile);
+            setProfilePhoto(profile.avatar || '');
+            setProfilePhotoFile(null);
+            setProfilePhotoError('');
+            setShouldDeleteProfilePhoto(false);
         }
 
         loadProfile();
@@ -303,6 +323,33 @@ export const UpdateForm = () => {
                 {success && (
                     <Alert severity='success'>Профиль успешно обновлён.</Alert>
                 )}
+
+                <ProfilePhotoUploader
+                    value={profilePhoto}
+                    error={profilePhotoError}
+                    disabled={loading}
+                    onChange={(nextPhoto, file) => {
+                        setProfilePhoto(nextPhoto);
+                        setProfilePhotoFile(file);
+                        setShouldDeleteProfilePhoto(false);
+                        setProfilePhotoError('');
+                        setError(false);
+                        setSuccess(false);
+                    }}
+                    onRemove={() => {
+                        setProfilePhoto('');
+                        setProfilePhotoFile(null);
+                        setShouldDeleteProfilePhoto(true);
+                        setProfilePhotoError('');
+                        setError(false);
+                        setSuccess(false);
+                    }}
+                    onError={(message) => {
+                        setProfilePhotoError(message);
+                        setError(false);
+                        setSuccess(false);
+                    }}
+                />
 
                 {/* MAIN */}
                 <Grid container spacing={2}>
