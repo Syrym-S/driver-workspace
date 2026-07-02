@@ -7,6 +7,7 @@ const TripsList = ({
     onChangePage,
     onStartLead,
     startingTripId,
+    hasActiveTrip,
 }) => {
     if (!data?.results?.length) {
         return <Typography>Нет поездок</Typography>;
@@ -35,6 +36,7 @@ const TripsList = ({
                     trip={trip}
                     onStartLead={onStartLead}
                     isStarting={startingTripId === trip.id}
+                    hasActiveTrip={hasActiveTrip}
                 />
             ))}
 

@@ -1,6 +1,13 @@
 import { useRef } from 'react';
 
-import { Avatar, Box, Button, Stack, Typography } from '@mui/material';
+import {
+    Avatar,
+    Box,
+    Button,
+    CircularProgress,
+    Stack,
+    Typography,
+} from '@mui/material';
 
 import { validateAndReadProfilePhoto } from '../model/profile-photo.helpers';
 
@@ -8,6 +15,7 @@ export function ProfilePhotoUploader({
     value,
     error,
     disabled,
+    isLoading,
     onChange,
     onRemove,
     onError,
@@ -55,15 +63,35 @@ export function ProfilePhotoUploader({
                     sm: 'center',
                 }}
             >
-                <Avatar
-                    src={value || undefined}
-                    sx={{
-                        width: 96,
-                        height: 96,
-                        fontSize: 32,
-                        bgcolor: 'primary.light',
-                    }}
-                />
+                {isLoading ? (
+                    <Box
+                        sx={{
+                            width: 96,
+                            height: 96,
+                            borderRadius: '50%',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'background.default',
+                            flexShrink: 0,
+                        }}
+                    >
+                        <CircularProgress size={28} />
+                    </Box>
+                ) : (
+                    <Avatar
+                        src={value || undefined}
+                        sx={{
+                            width: 96,
+                            height: 96,
+                            fontSize: 32,
+                            bgcolor: 'primary.light',
+                            flexShrink: 0,
+                        }}
+                    />
+                )}
 
                 <Box>
                     <Typography fontWeight={600}>Фото профиля</Typography>
@@ -96,7 +124,7 @@ export function ProfilePhotoUploader({
                             Загрузить фото
                         </Button>
 
-                        {value && (
+                        {value && !isLoading && (
                             <Button
                                 color='error'
                                 variant='text'

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     Box,
@@ -24,6 +24,10 @@ import {
     getRoutesFromGeneratedRoute,
 } from './tender-route.helpers';
 import { generateTenderRoute } from '../../api/routing.api';
+import {
+    notificationDomainEventNames,
+    subscribeToNotificationDomainEvent,
+} from '../../../../components/notifications/model/notification-domain-events';
 
 export function TenderDetailsModal({ open, tender, onClose }) {
     const [route, setRoute] = useState(null);
@@ -51,6 +55,42 @@ export function TenderDetailsModal({ open, tender, onClose }) {
         onClose?.();
     }
 
+    const tenderId = tender?.id;
+
+    const refreshTenderDetails = useCallback(
+        async ({ withLoader = true } = {}) => {
+            if (!open || !tenderId) {
+                return;
+            }
+
+            try {
+                if (withLoader) {
+                    setIsDetailsLoading(true);
+                }
+
+                setDetailsError('');
+                setActionError('');
+
+                const response = await fetchDriverTenderById(tenderId);
+
+                setOpenTenderDetails(mapDriverTenderFromApi(response));
+            } catch (error) {
+                console.error(error);
+
+                setDetailsError(
+                    error.response?.data?.message ||
+                        error.message ||
+                        'Не удалось загрузить детали тендера',
+                );
+            } finally {
+                if (withLoader) {
+                    setIsDetailsLoading(false);
+                }
+            }
+        },
+        [open, tenderId],
+    );
+
     async function handleCreateBet({ amount, currency, comment }) {
         if (!openTenderDetails?.id) {
             return false;
@@ -67,8 +107,7 @@ export function TenderDetailsModal({ open, tender, onClose }) {
                 comment,
             });
 
-            const response = await fetchDriverTenderById(openTenderDetails.id);
-            setOpenTenderDetails(mapDriverTenderFromApi(response));
+            await refreshTenderDetails({ withLoader: false });
 
             return true;
         } catch (error) {
@@ -102,8 +141,7 @@ export function TenderDetailsModal({ open, tender, onClose }) {
                 bet_index: betIndex,
             });
 
-            const response = await fetchDriverTenderById(openTenderDetails.id);
-            setOpenTenderDetails(mapDriverTenderFromApi(response));
+            await refreshTenderDetails({ withLoader: false });
 
             return true;
         } catch (error) {
@@ -120,50 +158,21 @@ export function TenderDetailsModal({ open, tender, onClose }) {
     }
 
     useEffect(() => {
-        let isMounted = true;
+        refreshTenderDetails({ withLoader: true });
+    }, [refreshTenderDetails]);
 
-        async function loadTenderDetails() {
-            if (!open || !tender?.id) {
-                return;
-            }
-
-            try {
-                setIsDetailsLoading(true);
-                setDetailsError('');
-                setActionError('');
-
-                const response = await fetchDriverTenderById(tender.id);
-
-                if (!isMounted) {
-                    return;
-                }
-
-                setOpenTenderDetails(mapDriverTenderFromApi(response));
-            } catch (error) {
-                console.error(error);
-
-                if (!isMounted) {
-                    return;
-                }
-
-                setDetailsError(
-                    error.response?.data?.message ||
-                        error.message ||
-                        'Не удалось загрузить детали тендера',
-                );
-            } finally {
-                if (isMounted) {
-                    setIsDetailsLoading(false);
-                }
-            }
+    useEffect(() => {
+        if (!open || !tenderId) {
+            return undefined;
         }
 
-        loadTenderDetails();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [open, tender?.id]);
+        return subscribeToNotificationDomainEvent(
+            notificationDomainEventNames.tendersChanged,
+            () => {
+                refreshTenderDetails({ withLoader: false });
+            },
+        );
+    }, [open, tenderId, refreshTenderDetails]);
 
     useEffect(() => {
         let isMounted = true;

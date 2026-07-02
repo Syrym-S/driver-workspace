@@ -20,7 +20,7 @@ export const updateuser = async (payload) => {
     return response.data;
 };
 
-export const uploadDriverAvatar = async (file) => {
+export const uploadAvatar = async (file) => {
     const formData = new FormData();
 
     formData.append('file', file);
@@ -39,7 +39,7 @@ export const uploadDriverAvatar = async (file) => {
     return response.data;
 };
 
-export async function deleteDriverAvatar() {
+export async function deleteAvatar() {
     const response = await api.delete('/driver/profile/v1/avatar');
 
     return response.data;

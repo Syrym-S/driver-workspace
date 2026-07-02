@@ -109,3 +109,39 @@ export function notifyRealtimeNotification(notification) {
         },
     });
 }
+
+export function notifyEmailVerificationRequired() {
+    const { notifications, addNotification } = useNotificationsStore.getState();
+
+    const alreadyExists = notifications.some(
+        (notification) => notification.meta?.source === 'email-verification',
+    );
+
+    if (alreadyExists) {
+        return null;
+    }
+
+    return addNotification({
+        type: 'warning',
+        title: 'Email не подтверждён',
+        message:
+            'Подтвердите электронную почту. Нажмите на уведомление, чтобы отправить письмо повторно.',
+        autoCloseMs: 0,
+        meta: {
+            source: 'email-verification',
+        },
+    });
+}
+
+export function removeEmailVerificationNotification() {
+    const { notifications, removeNotification } =
+        useNotificationsStore.getState();
+
+    const notification = notifications.find(
+        (item) => item.meta?.source === 'email-verification',
+    );
+
+    if (notification) {
+        removeNotification(notification.id);
+    }
+}

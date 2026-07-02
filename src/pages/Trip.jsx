@@ -2,7 +2,7 @@ import { Box, CircularProgress, Alert, Button } from '@mui/material';
 
 import { useParams } from 'react-router-dom';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 import Map from './Trip/components/Map';
 import Tool from './Trip/components/Tool';
@@ -23,6 +23,10 @@ import {
 import { StartLoadingModal } from './Tenders/components/tender-details/StartLoadingModal';
 import { StartUnloadingModal } from './Trip/components/StartUnloadingModal';
 import { startLead } from './MyTrips/api';
+import {
+    notificationDomainEventNames,
+    subscribeToNotificationDomainEvent,
+} from '../components/notifications/model/notification-domain-events';
 
 const Trip = ({ activeId = null }) => {
     const { id: routeId } = useParams();
@@ -41,15 +45,8 @@ const Trip = ({ activeId = null }) => {
     const [isStartUnloadingSubmitting, setIsStartUnloadingSubmitting] =
         useState(false);
     const [startUnloadingError, setStartUnloadingError] = useState('');
-    const leadStatus = normalizeStatus(openLead?.status);
     const [isStartLeadSubmitting, setIsStartLeadSubmitting] = useState(false);
     const [startLeadError, setStartLeadError] = useState('');
-
-    const canStartLoading =
-        leadStatus === 'start_driver' || leadStatus === 'start_loading';
-    const canStartUnloading =
-        leadStatus === 'verification_loading' ||
-        leadStatus === 'start_unloading';
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
@@ -58,27 +55,66 @@ const Trip = ({ activeId = null }) => {
     const geoWatchRef = useRef(null);
     const lastPointRef = useRef(null);
 
-    const fetchInfo = async () => {
-        try {
-            setLoading(true);
-            setError(false);
+    const fetchInfo = useCallback(
+        async ({ withLoader = true, refreshDocuments = false } = {}) => {
+            if (!id) {
+                return;
+            }
 
-            const res = await getLeadInfo({
-                lead_id: id,
-            });
+            try {
+                if (withLoader) {
+                    setLoading(true);
+                }
 
-            setOpenLead(res?.data || null);
-        } catch (e) {
-            console.error(e);
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
-    };
+                setError(false);
+
+                const res = await getLeadInfo({
+                    lead_id: id,
+                });
+
+                setOpenLead(res?.data || null);
+
+                if (refreshDocuments) {
+                    setDocumentsRefreshKey((prev) => prev + 1);
+                }
+            } catch (e) {
+                console.error(e);
+                setError(true);
+            } finally {
+                if (withLoader) {
+                    setLoading(false);
+                }
+            }
+        },
+        [id, setOpenLead],
+    );
 
     function normalizeStatus(status) {
         return String(status || '').toLowerCase();
     }
+
+    const isNotificationAboutCurrentTrip = useCallback(
+        (notification) => {
+            const notificationLeadId =
+                notification?.lead_id ||
+                notification?.leadId ||
+                notification?.lead?.id ||
+                '';
+
+            if (notificationLeadId) {
+                return String(notificationLeadId) === String(id);
+            }
+
+            const link = String(notification?.link || '');
+
+            if (link) {
+                return link.includes(String(id));
+            }
+
+            return true;
+        },
+        [id],
+    );
 
     async function handleStartLead() {
         if (!id) {
@@ -163,7 +199,10 @@ const Trip = ({ activeId = null }) => {
 
             setDocumentsRefreshKey((prev) => prev + 1);
 
-            await fetchInfo();
+            await fetchInfo({
+                withLoader: false,
+                refreshDocuments: false,
+            });
 
             setIsStartUnloadingModalOpen(false);
 
@@ -221,13 +260,61 @@ const Trip = ({ activeId = null }) => {
 
     useEffect(() => {
         if (id) {
-            fetchInfo();
+            fetchInfo({ withLoader: true });
         }
 
         return () => {
             setOpenLead(null);
         };
-    }, [id]);
+    }, [id, fetchInfo, setOpenLead]);
+
+    useEffect(() => {
+        if (!id) {
+            return undefined;
+        }
+
+        function handleShippingChanged(event) {
+            const notification = event.detail;
+
+            if (!isNotificationAboutCurrentTrip(notification)) {
+                return;
+            }
+
+            fetchInfo({
+                withLoader: false,
+                refreshDocuments: true,
+            });
+        }
+
+        return subscribeToNotificationDomainEvent(
+            notificationDomainEventNames.shippingChanged,
+            handleShippingChanged,
+        );
+    }, [id, fetchInfo, isNotificationAboutCurrentTrip]);
+
+    useEffect(() => {
+        if (!id) {
+            return undefined;
+        }
+
+        function handleLeadChanged(event) {
+            const notification = event.detail;
+
+            if (!isNotificationAboutCurrentTrip(notification)) {
+                return;
+            }
+
+            fetchInfo({
+                withLoader: false,
+                refreshDocuments: false,
+            });
+        }
+
+        return subscribeToNotificationDomainEvent(
+            notificationDomainEventNames.leadsChanged,
+            handleLeadChanged,
+        );
+    }, [id, fetchInfo, isNotificationAboutCurrentTrip]);
 
     useEffect(() => {
         if (openLead?.status !== 'started') {

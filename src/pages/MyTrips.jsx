@@ -1,8 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 
 import { getMyTrips, startLead } from './MyTrips/api';
 import TripsList from './MyTrips/components/TripsList';
+import {
+    notificationDomainEventNames,
+    subscribeToNotificationDomainEvent,
+} from '../components/notifications/model/notification-domain-events';
+
+function normalizeStatus(status) {
+    return String(status || '').toLowerCase();
+}
+
+function isDriverBusyTripStatus(status) {
+    const normalizedStatus = normalizeStatus(status);
+
+    return Boolean(
+        normalizedStatus &&
+        normalizedStatus !== 'add_driver' &&
+        normalizedStatus !== 'finished',
+    );
+}
 
 const MyTrips = () => {
     const [data, setData] = useState(null);
@@ -11,23 +29,31 @@ const MyTrips = () => {
     const [page, setPage] = useState(1);
     const [startingTripId, setStartingTripId] = useState(null);
 
-    const fetchTrips = async (pageValue = page) => {
-        try {
-            setLoading(true);
-            setError(null);
+    const fetchTrips = useCallback(
+        async (pageValue = page, { withLoader = true } = {}) => {
+            try {
+                if (withLoader) {
+                    setLoading(true);
+                }
 
-            const res = await getMyTrips({
-                page: pageValue,
-                per_page: 10,
-            });
+                setError(null);
 
-            setData(res);
-        } catch (err) {
-            setError(err?.response?.data || err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+                const res = await getMyTrips({
+                    page: pageValue,
+                    per_page: 10,
+                });
+
+                setData(res);
+            } catch (err) {
+                setError(err?.response?.data || err.message);
+            } finally {
+                if (withLoader) {
+                    setLoading(false);
+                }
+            }
+        },
+        [page],
+    );
 
     async function handleStartLead(leadId) {
         try {
@@ -48,8 +74,33 @@ const MyTrips = () => {
     }
 
     useEffect(() => {
-        fetchTrips(page);
-    }, [page]);
+        fetchTrips(page, { withLoader: true });
+    }, [fetchTrips, page]);
+
+    useEffect(() => {
+        const unsubscribeLeads = subscribeToNotificationDomainEvent(
+            notificationDomainEventNames.leadsChanged,
+            () => {
+                fetchTrips(page, { withLoader: false });
+            },
+        );
+
+        const unsubscribeShipping = subscribeToNotificationDomainEvent(
+            notificationDomainEventNames.shippingChanged,
+            () => {
+                fetchTrips(page, { withLoader: false });
+            },
+        );
+
+        return () => {
+            unsubscribeLeads();
+            unsubscribeShipping();
+        };
+    }, [fetchTrips, page]);
+
+    const hasActiveTrip = Boolean(
+        data?.results?.some((trip) => isDriverBusyTripStatus(trip.status)),
+    );
 
     return (
         <Box
@@ -86,6 +137,7 @@ const MyTrips = () => {
                         onChangePage={setPage}
                         onStartLead={handleStartLead}
                         startingTripId={startingTripId}
+                        hasActiveTrip={hasActiveTrip}
                     />
                 )}
             </Box>

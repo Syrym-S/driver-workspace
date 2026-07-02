@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material';
 import { fetchDriverTenders } from './Tenders/api/tenders.api';
 import { mapDriverTendersListFromApi } from './Tenders/model/tender.adapter';
 import { TendersPagination } from './Tenders/components/TendersPagination';
 import { TenderDetailsModal } from './Tenders/components/tender-details/TenderDetailsModal';
 import { TenderCard } from './Tenders/components/TenderCard';
+import {
+    notificationDomainEventNames,
+    subscribeToNotificationDomainEvent,
+} from '../components/notifications/model/notification-domain-events';
 
 const PER_PAGE = 5;
 
@@ -33,54 +37,57 @@ export default function Tenders() {
         setOpenTender(null);
     }
 
-    useEffect(() => {
-        let isMounted = true;
-
-        async function loadTenders() {
+    const loadTenders = useCallback(
+        async (nextPage = page, { withLoader = true } = {}) => {
             try {
-                setIsLoading(true);
+                if (withLoader) {
+                    setIsLoading(true);
+                }
+
                 setError('');
 
                 const response = await fetchDriverTenders({
-                    page,
+                    page: nextPage,
                     limit: perPage,
                 });
-
-                if (!isMounted) {
-                    return;
-                }
 
                 const mappedResponse = mapDriverTendersListFromApi(response);
 
                 setTenders(mappedResponse.tenders);
                 setCount(mappedResponse.count);
+                setPage(nextPage);
             } catch (loadError) {
                 console.error(loadError);
-
-                if (!isMounted) {
-                    return;
-                }
 
                 setError(
                     loadError.response?.data?.message ||
                         loadError.message ||
                         'Не удалось загрузить тендеры',
                 );
+
                 setTenders([]);
                 setCount(0);
             } finally {
-                if (isMounted) {
+                if (withLoader) {
                     setIsLoading(false);
                 }
             }
-        }
+        },
+        [page, perPage],
+    );
 
-        loadTenders();
+    useEffect(() => {
+        loadTenders(page, { withLoader: true });
+    }, [loadTenders, page]);
 
-        return () => {
-            isMounted = false;
-        };
-    }, [page, perPage]);
+    useEffect(() => {
+        return subscribeToNotificationDomainEvent(
+            notificationDomainEventNames.tendersChanged,
+            () => {
+                loadTenders(page, { withLoader: false });
+            },
+        );
+    }, [loadTenders, page]);
 
     return (
         <Box

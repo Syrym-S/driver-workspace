@@ -5,13 +5,19 @@ function normalizeStatus(status) {
     return String(status || '').toLowerCase();
 }
 
-const TripsItem = ({ trip, onStartLead, isStarting = false }) => {
+const TripsItem = ({
+    trip,
+    onStartLead,
+    isStarting = false,
+    hasActiveTrip = false,
+}) => {
     const from = trip.from_location?.trim();
     const to = trip.to_location?.trim();
     const navigate = useNavigate();
 
     const status = normalizeStatus(trip.status);
-    const canStartLead = status === 'add_driver';
+
+    const canStartLead = status === 'add_driver' && !hasActiveTrip;
 
     const handleOpenTrip = (id) => {
         navigate(`/trip/${id}`);
