@@ -97,17 +97,26 @@ export function EmailVerificationStatus() {
 
                 <Stack
                     direction='row'
-                    spacing={1}
                     alignItems='center'
                     justifyContent={{
                         xs: 'flex-start',
                         sm: 'flex-end',
                     }}
                     sx={{
+                        width: {
+                            xs: '100%',
+                            sm: 'auto',
+                        },
                         flexShrink: 0,
                         alignSelf: {
-                            xs: 'flex-start',
+                            xs: 'stretch',
                             sm: 'center',
+                        },
+                        gap: 1,
+
+                        '@media (max-width: 399px)': {
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
                         },
                     }}
                 >
@@ -140,7 +149,10 @@ export function EmailVerificationStatus() {
                                 onClick={openEmailVerificationModal}
                                 sx={{
                                     flexShrink: 0,
-                                    alignSelf: 'center',
+                                    alignSelf: {
+                                        xs: 'flex-start',
+                                        sm: 'center',
+                                    },
                                     minWidth: 'auto',
                                     height: 28,
                                     minHeight: 28,

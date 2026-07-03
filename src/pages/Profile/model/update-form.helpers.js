@@ -16,7 +16,6 @@ export function createProfileForm(user) {
             user?.issueCountry ||
             '',
 
-        issued_by: user?.issued_by || '',
         issued_date: user?.issued_date || '',
 
         is_ip: Boolean(user?.is_ip),
@@ -48,10 +47,6 @@ export function buildProfilePayload(form, isPasswordTouched) {
 
     if (form.issue_country) {
         payload.personIssueCountry = normalizeText(form.issue_country);
-    }
-
-    if (form.issued_by) {
-        payload.issued_by = normalizeText(form.issued_by);
     }
 
     if (form.issued_date) {
@@ -92,7 +87,6 @@ export function buildComparableProfileForm(form) {
 
         document_number: normalizeText(form.document_number),
         issue_country: normalizeText(form.issue_country),
-        issued_by: normalizeText(form.issued_by),
         issued_date: normalizeText(form.issued_date),
 
         is_ip: Boolean(form.is_ip),
@@ -130,7 +124,6 @@ export function mapProfileFormToUserPatch(form, avatar) {
         personDocumentNumber: form.document_number,
         personIssueCountry: form.issue_country,
 
-        issued_by: form.issued_by,
         issued_date: form.issued_date,
 
         is_ip: form.is_ip,

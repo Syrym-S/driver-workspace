@@ -55,24 +55,6 @@ export function DocumentsFields({ form, onChange, onForeignerChange }) {
                     />
 
                     <TextField
-                        select
-                        label='Кем выдан'
-                        value={form.issued_by}
-                        onChange={(event) =>
-                            onChange('issued_by', event.target.value)
-                        }
-                        fullWidth
-                        size='small'
-                        sx={{
-                            minWidth: 0,
-                        }}
-                    >
-                        <MenuItem value='МВД'>МВД</MenuItem>
-                        <MenuItem value='МИД'>МИД</MenuItem>
-                        <MenuItem value='Нету'>Нету</MenuItem>
-                    </TextField>
-
-                    <TextField
                         type='date'
                         label='Дата выдачи'
                         value={form.issued_date}
