@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { Header } from '../components/Header/Header';
+import { GeoTrackingProvider } from '../components/geo-tracking/ui/GeoTrackingProvider';
 
 const drawerWidth = 240;
 
@@ -29,7 +30,9 @@ export default function Layout() {
                     backgroundColor: 'background.default',
                 }}
             >
-                <Outlet />
+                <GeoTrackingProvider>
+                    <Outlet />
+                </GeoTrackingProvider>
             </Box>
         </Box>
     );

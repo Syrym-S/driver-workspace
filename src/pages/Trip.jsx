@@ -2,7 +2,7 @@ import { Box, CircularProgress, Alert, Button } from '@mui/material';
 
 import { useParams } from 'react-router-dom';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import Map from './Trip/components/Map';
 import Tool from './Trip/components/Tool';
@@ -13,9 +13,6 @@ import { getLeadInfo } from './Trip/api/api';
 
 import { useApp } from '../app/context';
 
-import { getBrowserLocation } from './Trip/api/geows';
-
-import { connectGeoWS, bindGeoWS, sendGeoPoint } from './Trip/api/geows';
 import {
     submitStartLoading,
     submitStartUnloading,
@@ -27,6 +24,19 @@ import {
     notificationDomainEventNames,
     subscribeToNotificationDomainEvent,
 } from '../components/notifications/model/notification-domain-events';
+
+const GEO_TRACKING_STATUSES = new Set([
+    'started',
+    'start_driver',
+    'start_loading',
+    'verification_loading',
+    'start_unloading',
+    'verification_unloading',
+]);
+
+function shouldTrackGeo(status) {
+    return GEO_TRACKING_STATUSES.has(String(status || '').toLowerCase());
+}
 
 const Trip = ({ activeId = null }) => {
     const { id: routeId } = useParams();
@@ -50,10 +60,6 @@ const Trip = ({ activeId = null }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
-
-    const wsRef = useRef(null);
-    const geoWatchRef = useRef(null);
-    const lastPointRef = useRef(null);
 
     const fetchInfo = useCallback(
         async ({ withLoader = true, refreshDocuments = false } = {}) => {
@@ -315,111 +321,6 @@ const Trip = ({ activeId = null }) => {
             handleLeadChanged,
         );
     }, [id, fetchInfo, isNotificationAboutCurrentTrip]);
-
-    useEffect(() => {
-        if (openLead?.status !== 'started') {
-            return;
-        }
-
-        const session = openLead?.geows?.session;
-
-        const wsUrl = GeoWS_Config?.ws;
-
-        const userId = GeoWS_Config?.user;
-
-        if (!session || !wsUrl || !userId) {
-            return;
-        }
-
-        const ws = connectGeoWS({
-            wsUrl,
-            token: session,
-            userId,
-        });
-
-        wsRef.current = ws;
-
-        bindGeoWS(ws, {
-            onOpen: () => {
-                console.log('GeoWS connected');
-            },
-
-            onClose: () => {
-                console.log('GeoWS closed');
-            },
-
-            onError: (e) => {
-                console.error(e);
-            },
-        });
-
-        geoWatchRef.current = setInterval(async () => {
-            try {
-                const pos = await getBrowserLocation();
-
-                // новые координаты
-                const nextPoint = {
-                    latitude: pos.coords.latitude,
-                    longitude: pos.coords.longitude,
-                    altitude: pos.coords.altitude ?? 0,
-                };
-
-                // последние координаты
-                const lastPoint = lastPointRef.current;
-
-                // нет прошлой точки
-                if (!lastPoint) {
-                    sendGeoPoint(ws, nextPoint);
-
-                    lastPointRef.current = nextPoint;
-
-                    return;
-                }
-
-                // сравнение
-                const samePoint =
-                    lastPoint.latitude === nextPoint.latitude &&
-                    lastPoint.longitude === nextPoint.longitude;
-
-                // не отправляем дубль
-                if (samePoint) {
-                    return;
-                }
-
-                sendGeoPoint(ws, nextPoint);
-
-                lastPointRef.current = nextPoint;
-            } catch (e) {
-                if (e?.code === 1) {
-                    console.warn('Доступ к геолокации запрещён пользователем');
-
-                    if (geoWatchRef.current) {
-                        clearInterval(geoWatchRef.current);
-                        geoWatchRef.current = null;
-                    }
-
-                    return;
-                }
-
-                console.error(e);
-            }
-        }, 5000);
-
-        return () => {
-            if (geoWatchRef.current) {
-                clearInterval(geoWatchRef.current);
-                geoWatchRef.current = null;
-            }
-
-            if (wsRef.current) {
-                wsRef.current.close();
-                wsRef.current = null;
-            }
-
-            // очищаем последнюю точку
-            lastPointRef.current = null;
-        };
-    }, [openLead?.status]);
 
     // LOADING
     if (loading) {

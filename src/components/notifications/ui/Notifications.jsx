@@ -202,21 +202,21 @@ export function Notifications() {
         }
 
         const connection = openNotificationWsConnection({
-            onOpen: () => {
-                console.info('NotificationWS opened');
-            },
+            // onOpen: () => {
+            //     console.info('NotificationWS opened');
+            // },
 
-            onClose: (event) => {
-                console.info('NotificationWS closed', event);
-            },
+            // onClose: (event) => {
+            //     console.info('NotificationWS closed', event);
+            // },
 
-            onError: (error) => {
-                console.error('NotificationWS error', error);
-            },
+            // onError: (error) => {
+            //     console.error('NotificationWS error', error);
+            // },
 
-            onAuthFailed: (payload) => {
-                console.error('NotificationWS auth failed', payload);
-            },
+            // onAuthFailed: (payload) => {
+            //     console.error('NotificationWS auth failed', payload);
+            // },
 
             onNotification: (notification) => {
                 setNotifications((prevNotifications) => {

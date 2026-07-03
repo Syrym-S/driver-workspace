@@ -10,6 +10,8 @@
  *  - исходящие: зависит от роутинга (type field)
  */
 
+import { api } from '../../../api/client';
+
 /**
  * @param {Object} params
  * @param {string} params.wsUrl - base ws url (пример: wss://logistic.prodavay.kz:8282)
@@ -18,70 +20,66 @@
  * @returns {WebSocket}
  */
 export function connectGeoWS({ wsUrl, token, userId }) {
-    if (!wsUrl) throw new Error('WS URL not configured')
-    if (!token) throw new Error('Session token missing')
-    if (!userId) throw new Error('User ID missing')
+    if (!wsUrl) throw new Error('WS URL not configured');
+    if (!token) throw new Error('Session token missing');
+    if (!userId) throw new Error('User ID missing');
 
-    const url = new URL(wsUrl)
-    url.searchParams.set('token', token)
-    url.searchParams.set('user_id', String(userId))
+    const url = new URL(wsUrl);
+    url.searchParams.set('token', token);
+    url.searchParams.set('user_id', String(userId));
 
-    const ws = new WebSocket(url.toString())
-    return ws
+    const ws = new WebSocket(url.toString());
+    return ws;
 }
 
 /**
  * Подписка на события WS
  */
 export function bindGeoWS(ws, handlers = {}) {
-    const {
-        onOpen,
-        onClose,
-        onError,
-        onAuthFailed,
-        onPoints,
-        onMessage,
-    } = handlers
+    const { onOpen, onClose, onError, onAuthFailed, onPoints, onMessage } =
+        handlers;
 
     ws.onopen = () => {
-        onOpen?.()
-        console.log('WS opened')
-    }
+        onOpen?.();
+        console.log('WS opened');
+    };
 
     ws.onerror = (e) => {
-        onError?.(e)
-        console.log('WS error:', e)
-    }
+        onError?.(e);
+        console.log('WS error:', e);
+    };
 
     ws.onclose = () => {
-        onClose?.()
-          console.log('WS closed')
-    }
+        onClose?.();
+        console.log('WS closed');
+    };
 
     ws.onmessage = (event) => {
-        let payload = null
+        let payload = null;
 
         try {
-            payload = JSON.parse(event.data)
+            payload = JSON.parse(event.data);
         } catch (e) {
-            return
+            return;
         }
-        console.log('WS message:', payload)
+        console.log('WS message:', payload);
 
-        onMessage?.(payload)
+        onMessage?.(payload);
 
         // auth failed на сервере
         if (payload?.type === 'error') {
-            if (String(payload?.message).toLowerCase().includes('auth failed')) {
-                onAuthFailed?.(payload)
+            if (
+                String(payload?.message).toLowerCase().includes('auth failed')
+            ) {
+                onAuthFailed?.(payload);
             }
         }
 
         // точки
         if (payload?.type === 'get_points') {
-            onPoints?.(payload?.data ?? [])
+            onPoints?.(payload?.data ?? []);
         }
-    }
+    };
 }
 
 /**
@@ -89,52 +87,103 @@ export function bindGeoWS(ws, handlers = {}) {
  * Сервер роутит по `type` в data
  */
 export function requestGeoPoints(ws, allowedType) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     // type должен совпасть с $connection->type
     ws.send(
         JSON.stringify({
             type: allowedType, // 'read' или 'add'
             action: 'get_points',
-        })
-    )
+        }),
+    );
 }
 
 export function getBrowserLocation(options = {}) {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            reject(new Error('Geolocation is not supported in this browser'))
-            return
+            reject(new Error('Geolocation is not supported in this browser'));
+            return;
         }
 
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                resolve(pos)
+                resolve(pos);
             },
             (err) => {
-                reject(err)
+                reject(err);
             },
             {
                 enableHighAccuracy: true,
                 timeout: 15_000,
                 maximumAge: 0,
                 ...options,
-            }
-        )
-    })
+            },
+        );
+    });
 }
 
 export function sendGeoPoint(ws, point) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        return false;
+    }
 
     ws.send(
         JSON.stringify({
-            type: 'add',
             point: {
                 latitude: point.latitude,
                 longitude: point.longitude,
                 altitude: point.altitude ?? 0,
             },
-        })
-    )
+        }),
+    );
+
+    return true;
+}
+
+function getGeoWsConfig() {
+    const geoConfig = window.GeoWS_Config || {};
+    const appData = window.APP_DATA || {};
+
+    return {
+        wsUrl: geoConfig.ws || geoConfig.wsUrl,
+        userId:
+            appData.user_id ||
+            appData.userId ||
+            geoConfig.user ||
+            geoConfig.user_id ||
+            geoConfig.currentUserId ||
+            geoConfig.current_user_id ||
+            null,
+    };
+}
+
+export function isGeoWsConfigured() {
+    const { wsUrl, userId } = getGeoWsConfig();
+
+    return Boolean(wsUrl && userId);
+}
+
+export async function fetchLeadGeoWsToken(leadId, type = 'add') {
+    const response = await api.post('/geows/v1/token', {
+        lead_id: leadId,
+        type,
+    });
+
+    const data = response.data;
+
+    if (!data?.token) {
+        throw new Error('GeoWS token was not returned');
+    }
+
+    return data;
+}
+
+export function connectLeadGeoWS({ token }) {
+    const { wsUrl, userId } = getGeoWsConfig();
+
+    return connectGeoWS({
+        wsUrl,
+        token,
+        userId,
+    });
 }

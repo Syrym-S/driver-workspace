@@ -1,4 +1,4 @@
-import { Box, Typography, Pagination } from '@mui/material';
+import { Box, Typography, Pagination, useMediaQuery } from '@mui/material';
 import TripsItem from './TripsItem';
 
 const TripsList = ({
@@ -9,13 +9,14 @@ const TripsList = ({
     startingTripId,
     hasActiveTrip,
 }) => {
+    const isSmallMobile = useMediaQuery('(max-width: 375px)');
+
     if (!data?.results?.length) {
         return <Typography>Нет поездок</Typography>;
     }
 
-    console.log('smth');
-
-    const totalPages = Math.ceil(data.count / data.perPage);
+    const perPage = data.perPage || data.per_page || data.limit || 10;
+    const totalPages = Math.max(1, Math.ceil((data.count || 0) / perPage));
 
     return (
         <Box
@@ -42,13 +43,9 @@ const TripsList = ({
 
             <Box
                 sx={{
+                    mt: 3,
                     display: 'flex',
                     justifyContent: 'center',
-                    alignItems: 'center',
-                    mt: {
-                        xs: 2,
-                        md: 3,
-                    },
                     width: '100%',
                     overflowX: 'auto',
                     pb: 0.5,
@@ -57,8 +54,12 @@ const TripsList = ({
                 <Pagination
                     count={totalPages}
                     page={page}
-                    onChange={(e, value) => onChangePage(value)}
-                    size='small'
+                    onChange={(event, value) => onChangePage(value)}
+                    color='primary'
+                    shape='rounded'
+                    size={isSmallMobile ? 'small' : 'medium'}
+                    siblingCount={isSmallMobile ? 0 : 1}
+                    boundaryCount={1}
                 />
             </Box>
         </Box>

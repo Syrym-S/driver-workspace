@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 import {
     Paper,
     Typography,
@@ -6,7 +6,7 @@ import {
     Alert,
     Button,
     Box,
-} from "@mui/material";
+} from '@mui/material';
 
 import {
     MapContainer,
@@ -15,13 +15,13 @@ import {
     Tooltip,
     Marker,
     useMap,
-} from "react-leaflet";
+} from 'react-leaflet';
 
-import L from "leaflet";
-import polyline from "@mapbox/polyline";
+import L from 'leaflet';
+import polyline from '@mapbox/polyline';
 
-import { generateRoute } from "../api/api";
-import { simplifyRouteByAngle } from "../components/route.helpers";
+import { generateRoute } from '../api/api';
+import { simplifyRouteByAngle } from '../components/route.helpers';
 
 // decode polyline
 const decodePolyline = (encoded) => {
@@ -43,19 +43,18 @@ const FitBounds = ({ coords }) => {
 
 // иконки
 const startIcon = new L.Icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
     iconSize: [28, 28],
 });
 
 const endIcon = new L.Icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
     iconSize: [28, 28],
 });
 
 const SHOULD_SIMPLIFY_ROUTE = true;
 
 const Map = ({ tripId }) => {
-    console.log("mappp");
     const [coords, setCoords] = useState([]);
     const [route, setRoute] = useState(null);
 
@@ -79,10 +78,10 @@ const Map = ({ tripId }) => {
                     ? simplifyRouteByAngle(decoded, 5, 8)
                     : decoded;
 
-                console.log("route coords:", {
-                    original: decoded.length,
-                    rendered: nextCoords.length,
-                });
+                // console.log("route coords:", {
+                //     original: decoded.length,
+                //     rendered: nextCoords.length,
+                // });
 
                 setCoords(nextCoords);
                 setRoute(routeData);
@@ -117,7 +116,7 @@ const Map = ({ tripId }) => {
         <Paper
             sx={{
                 borderRadius: 3,
-                overflow: "hidden", // важно
+                overflow: 'hidden', // важно
             }}
         >
             {/* HEADER */}
@@ -152,7 +151,7 @@ const Map = ({ tripId }) => {
             {!loading && !error && coords.length > 0 && (
                 <Box
                     sx={{
-                        width: "100%",
+                        width: '100%',
                         height: {
                             xs: 250,
                             md: 400,
@@ -165,8 +164,8 @@ const Map = ({ tripId }) => {
                         center={coords[0]}
                         zoom={7}
                         style={{
-                            width: "100%",
-                            height: "100%",
+                            width: '100%',
+                            height: '100%',
                         }}
                     >
                         <TileLayer
@@ -183,12 +182,12 @@ const Map = ({ tripId }) => {
                                     <br />
                                     {(route?.distanceMeters / 1000).toFixed(
                                         1,
-                                    )}{" "}
+                                    )}{' '}
                                     км
                                     <br />
                                     {Math.round(
                                         parseInt(route?.duration) / 60,
-                                    )}{" "}
+                                    )}{' '}
                                     мин
                                 </div>
                             </Tooltip>
