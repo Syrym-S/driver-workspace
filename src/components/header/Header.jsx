@@ -24,6 +24,7 @@ import { logoutApi } from "./api/logout.api";
 import { getCompactEmail } from "../../shared/helpers/helpers";
 import { getUser } from "../../pages/Profile/api";
 import { PROFILE_PHOTO_UPDATED_EVENT } from "../../pages/Profile/model/profile-photo.helpers";
+import { isStaging } from "../../api/client";
 
 export function Header({ onOpenSidebar }) {
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
@@ -89,7 +90,9 @@ export function Header({ onOpenSidebar }) {
 
       await logoutApi();
 
-      window.location.replace("/staging/auth/login");
+      window.location.replace(
+        isStaging ? "/staging/auth/login" : "/auth/login",
+      );
     } catch (error) {
       setLogoutError(
         error.response?.data?.message ||
