@@ -9,22 +9,22 @@ import Documents from "../pages/Documents";
 import Tenders from "../pages/Tenders";
 
 export const router = createBrowserRouter(
-    [
-        {
-            element: <Layout />,
-            children: [
-                { path: "/", element: <CurrentTrip /> },
-                { path: "/trips", element: <MyTrips /> },
-                { path: "/profile", element: <Profile /> },
-                // { path: '/vehicles', element: <MyVehicles /> },
-                { path: "/use", element: <Use /> },
-                { path: "/trip/:id", element: <Trip /> },
-                { path: "/documents", element: <Documents /> },
-                { path: "/tenders", element: <Tenders /> },
-            ],
-        },
-    ],
+  [
     {
-        basename: "/driver",
+      element: <Layout />,
+      children: [
+        { path: "/", element: <CurrentTrip /> },
+        { path: "/trips", element: <MyTrips /> },
+        { path: "/profile", element: <Profile /> },
+        // { path: '/vehicles', element: <MyVehicles /> },
+        { path: "/use", element: <Use /> },
+        { path: "/trip/:id", element: <Trip /> },
+        { path: "/documents", element: <Documents /> },
+        { path: "/tenders", element: <Tenders /> },
+      ],
     },
+  ],
+  {
+    basename: "/staging/driver",
+  },
 );
