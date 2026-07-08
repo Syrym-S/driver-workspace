@@ -8,6 +8,10 @@ import Trip from "../pages/Trip";
 import Documents from "../pages/Documents";
 import Tenders from "../pages/Tenders";
 
+const isStaging = window?.APP_DATA?.mode === "staging";
+
+const DRIVER_BASENAME = isStaging ? "/staging/driver" : "/driver";
+
 export const router = createBrowserRouter(
   [
     {
@@ -25,6 +29,6 @@ export const router = createBrowserRouter(
     },
   ],
   {
-    basename: "/staging/driver",
+    basename: DRIVER_BASENAME,
   },
 );

@@ -45,6 +45,13 @@ function buildGeoPointFromPosition(position) {
     });
 }
 
+function isActiveLeadNotFoundError(error) {
+    return (
+        error?.response?.status === 404 ||
+        error?.status === 404
+    );
+}
+
 export function GeoTrackingProvider({ children }) {
     const [activeLead, setActiveLead] = useState(null);
 
@@ -445,8 +452,14 @@ export function GeoTrackingProvider({ children }) {
 
             await startGeoConnection(leadId);
         } catch (error) {
+            if (isActiveLeadNotFoundError(error)) {
+                setActiveLead(null);
+                cleanupGeoConnection();
+                return;
+            }
+
             console.warn(
-                'DriverGeoTracking active lead not found, stop tracking',
+                'DriverGeoTracking failed to refresh active lead, stop tracking',
                 error,
             );
 
