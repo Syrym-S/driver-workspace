@@ -367,7 +367,8 @@ const Trip = ({ activeId = null }) => {
                     gap: 2,
                     gridTemplateColumns: '1fr',
                     '@media (min-width: 900px)': {
-                        gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 380px)',
+                        gridTemplateColumns:
+                            'minmax(0, 2fr) minmax(300px, 380px)',
                         gridTemplateAreas: `
                         "map document"
                         "tool document"

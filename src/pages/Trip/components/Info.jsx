@@ -14,6 +14,7 @@ import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 import { useApp } from '../../../app/context';
+import { normalizePhoneHref } from '../../../shared/helpers/helpers';
 
 function hasValue(value) {
     return value !== null && value !== undefined && value !== '';
@@ -51,6 +52,20 @@ function formatDimensions(cargo) {
     return `${length || 0} × ${width || 0} × ${height || 0} см`;
 }
 
+function formatMoney(amount, currency = 'KZT') {
+    if (!hasValue(amount)) {
+        return '—';
+    }
+
+    const numericAmount = Number(amount);
+
+    if (Number.isNaN(numericAmount)) {
+        return `${amount} ${currency || 'KZT'}`;
+    }
+
+    return `${numericAmount.toLocaleString('ru-RU')} ${currency || 'KZT'}`;
+}
+
 const Item = ({ label, value }) => (
     <Box>
         <Typography variant='caption' color='text.secondary'>
@@ -62,6 +77,38 @@ const Item = ({ label, value }) => (
         </Typography>
     </Box>
 );
+
+const PhoneItem = ({ label, value }) => {
+    const phoneHref = normalizePhoneHref(value);
+
+    return (
+        <Box>
+            <Typography variant='caption' color='text.secondary'>
+                {label}
+            </Typography>
+
+            {phoneHref ? (
+                <Typography
+                    component='a'
+                    href={`tel:${phoneHref}`}
+                    fontWeight={500}
+                    sx={{
+                        display: 'block',
+                        color: 'primary.main',
+                        textDecoration: 'none',
+                        '&:hover': {
+                            textDecoration: 'underline',
+                        },
+                    }}
+                >
+                    {value}
+                </Typography>
+            ) : (
+                <Typography fontWeight={500}>—</Typography>
+            )}
+        </Box>
+    );
+};
 
 const Info = () => {
     const { openLead: info } = useApp();
@@ -206,7 +253,7 @@ const Info = () => {
                             </Grid>
 
                             <Grid item xs={12} md={6}>
-                                <Item
+                                <PhoneItem
                                     label='Телефон'
                                     value={info.forwarder?.tel}
                                 />
@@ -216,6 +263,33 @@ const Info = () => {
                                 <Item label='БИН' value={info.forwarder?.bin} />
                             </Grid>
                         </Grid>
+                    </Box>
+
+                    <Divider />
+
+                    <Box>
+                        <Paper
+                            variant='outlined'
+                            sx={{
+                                p: 2.5,
+                                borderRadius: 3,
+                                backgroundColor: 'background.default',
+                            }}
+                        >
+                            <Typography
+                                variant='caption'
+                                color='text.secondary'
+                            >
+                                Стоимость перевозки
+                            </Typography>
+
+                            <Typography variant='h6' fontWeight={700} mt={0.5}>
+                                {formatMoney(
+                                    info.transportation_price,
+                                    info.currency,
+                                )}
+                            </Typography>
+                        </Paper>
                     </Box>
                 </Stack>
             )}

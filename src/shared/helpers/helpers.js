@@ -18,3 +18,23 @@ export function getCompactEmail(email) {
 
     return `${compactLocalPart}@${domainPart}`;
 }
+
+function hasValue(value) {
+    return value !== null && value !== undefined && value !== '';
+}
+
+export function normalizePhoneHref(phone) {
+    if (!hasValue(phone)) {
+        return '';
+    }
+
+    const normalizedPhone = String(phone).replace(/[^\d+]/g, '');
+
+    if (!normalizedPhone) {
+        return '';
+    }
+
+    return normalizedPhone.startsWith('+')
+        ? normalizedPhone
+        : `+${normalizedPhone}`;
+}
