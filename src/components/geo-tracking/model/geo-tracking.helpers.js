@@ -6,9 +6,19 @@ export const DRIVER_GEO_INACTIVE_STATUSES = new Set([
 
 export const DRIVER_GEO_TRACKING_INTERVAL_MS = 30_000;
 
+// Кэшируем точки локально, чтобы не потерять координаты,
+// если WS временно закрыт или страница была перезагружена до отправки.
 const DRIVER_GEO_TRACKING_STORAGE_KEY = 'driver_geo_tracking_points';
+
+// Минимальный угол отклонения: если маршрут почти прямой,
+// промежуточную точку можно не отправлять.
 const DEFAULT_MIN_TRACKING_ANGLE_DEGREES = 5;
+
+// Даже если угол маленький, периодически сохраняем точку,
+// чтобы длинный прямой маршрут не схлопнулся в одну линию.
 const DEFAULT_MAX_SKIPPED_TRACKING_POINTS = 8;
+
+// Ограничиваем размер localStorage, чтобы кэш не рос бесконечно.
 const MAX_CACHED_TRACKING_POINTS = 100;
 
 export function normalizeLeadStatus(status) {
@@ -125,6 +135,9 @@ function toCoord(point) {
     return [Number(point.latitude), Number(point.longitude)];
 }
 
+// Строим приближённый 2D-вектор между двумя geo-точками.
+// longitude умножаем на cos(latitude), потому что длина градуса долготы
+// зависит от широты.
 function getProjectedVector(from, to) {
     const [fromLat, fromLng] = from;
     const [toLat, toLng] = to;
@@ -141,6 +154,8 @@ function getVectorLength(vector) {
     return Math.sqrt(vector.x ** 2 + vector.y ** 2);
 }
 
+// Считаем угол между двумя направлениями через скалярное произведение.
+// Возвращаем градусы, чтобы сравнивать с порогом DEFAULT_MIN_TRACKING_ANGLE_DEGREES.
 function getAngleBetweenVectors(firstVector, secondVector) {
     const firstLength = getVectorLength(firstVector);
     const secondLength = getVectorLength(secondVector);
@@ -160,6 +175,14 @@ function getAngleBetweenVectors(firstVector, secondVector) {
     return toDegrees(Math.acos(normalizedDotProduct));
 }
 
+// Streaming-версия упрощения маршрута.
+// Для проверки угла нужны три точки:
+// previousPoint — последняя сохранённая точка,
+// candidatePoint — точка-кандидат,
+// nextPoint — новая координата.
+//
+// Если угол между previous → candidate и candidate → next меньше порога,
+// candidate пропускаем. Если угол заметный — сохраняем candidate.
 export function getGeoTrackingAngleDecision({
     previousPoint,
     candidatePoint,
@@ -172,6 +195,8 @@ export function getGeoTrackingAngleDecision({
     const normalizedCandidatePoint = normalizeGeoTrackingPoint(candidatePoint);
     const normalizedNextPoint = normalizeGeoTrackingPoint(nextPoint);
 
+    // Без candidate или nextPoint угол посчитать невозможно,
+    // поэтому точку не сохраняем и не ломаем tracking.
     if (!normalizedCandidatePoint || !normalizedNextPoint) {
         return {
             shouldKeep: false,
@@ -180,6 +205,8 @@ export function getGeoTrackingAngleDecision({
         };
     }
 
+    // Для первой валидной точки ещё нет предыдущего направления,
+    // поэтому сохраняем её без проверки угла.
     if (!normalizedPreviousPoint) {
         return {
             shouldKeep: true,
@@ -219,6 +246,9 @@ function getLocalStorage() {
     return window.localStorage;
 }
 
+// Читаем cached points только для текущего leadId.
+// Если в localStorage лежат точки от другого рейса,
+// очищаем кэш, чтобы не отправить координаты не в тот lead.
 function readCachedGeoTrackingPayload() {
     const storage = getLocalStorage();
 
@@ -257,6 +287,8 @@ export function readCachedGeoTrackingPoints(leadId) {
         .filter(Boolean);
 }
 
+// Перед записью в localStorage нормализуем точки и ограничиваем их количество.
+// Защита от битых данных и бесконечного роста кэша.
 export function writeCachedGeoTrackingPoints(leadId, points) {
     const storage = getLocalStorage();
 
@@ -298,6 +330,8 @@ export function appendCachedGeoTrackingPoint(leadId, point) {
     return writeCachedGeoTrackingPoints(leadId, nextPoints);
 }
 
+// Очищаем кэш только после успешной отправки.
+// Если указан leadId, не трогаем кэш другого рейса.
 export function clearCachedGeoTrackingPoints(leadId) {
     const storage = getLocalStorage();
 
