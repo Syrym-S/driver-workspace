@@ -5,9 +5,9 @@ import {
     ListItemText,
     Box,
     Toolbar,
-    Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
+import logoSrc from "../../assets/logo.png";
 
 const drawerWidth = 240;
 
@@ -22,9 +22,28 @@ const links = [
 export default function Sidebar({ open, setOpen }) {
     const content = (
         <Box sx={{ width: drawerWidth }}>
-            <Toolbar>
-                <Typography variant='h6'>Driver</Typography>
-            </Toolbar>
+           <Toolbar
+                sx={{
+                    minHeight: 64,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    px: 2,
+                }}
+                >
+                <Box
+                    component="img"
+                    src={logoSrc}
+                    alt="Driver"
+                    sx={{
+                    height: 38,
+                    width: "auto",
+                    maxWidth: 170,
+                    objectFit: "contain",
+                    display: "block",
+                    }}
+                />
+                </Toolbar>
 
             <List>
                 {links.map((link) => (

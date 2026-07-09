@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import logoSrc from "../../../assets/logo.png";
+
 
 import {
   Alert,
@@ -164,6 +166,7 @@ export function Header({ onOpenSidebar }) {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 2,
+            position: "relative",
           }}
         >
           <Box
@@ -187,9 +190,39 @@ export function Header({ onOpenSidebar }) {
               <MenuIcon />
             </IconButton>
 
-            <Typography fontWeight={600} noWrap>
-              Driver
-            </Typography>
+            <Box
+              sx={{
+                position: "absolute",
+                display: {
+                  xs: "flex",
+                  md: "none",
+                },
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none",
+
+                left: 56,
+                transform: "none",
+
+                "@media (min-width: 701px)": {
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                },
+              }}
+            >
+              <Box
+                component="img"
+                src={logoSrc}
+                alt="Driver"
+                sx={{
+                  height: 32,
+                  width: "auto",
+                  maxWidth: 150,
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </Box>
           </Box>
 
           <Box
@@ -224,6 +257,15 @@ export function Header({ onOpenSidebar }) {
                 overflow: "hidden",
                 flexShrink: 1,
                 gap: 0.75,
+
+                "@media (max-width: 449px)": {
+                  width: 36,
+                  height: 36,
+                  minWidth: 36,
+                  maxWidth: 36,
+                  px: 0,
+                  borderRadius: "50%",
+                },
               }}
             >
               <Avatar
@@ -246,7 +288,14 @@ export function Header({ onOpenSidebar }) {
                 component="span"
                 noWrap
                 sx={{
-                  display: "block",
+                  display: {
+                    xs: "none",
+                    sm: "block",
+                  },
+
+                  "@media (min-width: 450px)": {
+                    display: "block",
+                  },
                   minWidth: 0,
                   maxWidth: "100%",
                   overflow: "hidden",
