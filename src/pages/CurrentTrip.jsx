@@ -1,20 +1,30 @@
-import { Alert, CircularProgress, Box } from "@mui/material";
+import { Alert, CircularProgress, Box, Typography } from "@mui/material";
 import { useApp } from "../app/context";
-import { getActiveLead } from "./Trip/api/api";
 import Trip from "./Trip";
-import { useEffect, useState } from "react";
 
 export default function CurrentTrip() {
-  const {activeLead} = useApp();
+  const { activeLead, isActiveLeadLoading } = useApp();
 
-
-  // Active Trip
-  if(activeLead?.lead_id){
-    return <Trip activeId={activeLead.lead_id}/>
+  if (isActiveLeadLoading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="60vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
+  if (activeLead?.lead_id) {
+    return <Trip activeId={activeLead.lead_id} />;
+  }
+
+
   return <Alert severity="info">
-    Текущйи рейса нету.
-    Выберите из списка или связитесь с экспедиторами!
+    Текущего рейса нету.
+    Выберите из списка или свяжитесь с экспедиторами!
   </Alert>;
 }

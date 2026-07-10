@@ -25,19 +25,6 @@ import {
     subscribeToNotificationDomainEvent,
 } from '../components/notifications/model/notification-domain-events';
 
-const GEO_TRACKING_STATUSES = new Set([
-    'started',
-    'start_driver',
-    'start_loading',
-    'verification_loading',
-    'start_unloading',
-    'verification_unloading',
-]);
-
-function shouldTrackGeo(status) {
-    return GEO_TRACKING_STATUSES.has(String(status || '').toLowerCase());
-}
-
 const Trip = ({ activeId = null }) => {
     const { id: routeId } = useParams();
     const id = activeId ?? routeId;

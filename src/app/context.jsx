@@ -7,11 +7,13 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState();
   const [openLead, setOpenLead] = useState([]);
-  const [activeLead, setActiveLead] = useState([]);
+  const [activeLead, setActiveLead] = useState(null);
+  const [isActiveLeadLoading, setIsActiveLeadLoading] = useState(true);
 
   // Запрос на активную поездку
   const fetchCurrentTrip = async () => {
     try {
+      setIsActiveLeadLoading(true);
 
       const res = await getActiveLead();
 
@@ -19,7 +21,9 @@ export const AppProvider = ({ children }) => {
 
     } catch (e) {
       console.error(e);
+      setActiveLead(null);
     } finally {
+      setIsActiveLeadLoading(false);
     }
   };
 
@@ -54,7 +58,8 @@ export const AppProvider = ({ children }) => {
 
       // активные лид
       activeLead,
-      setActiveLead
+      setActiveLead,
+      isActiveLeadLoading,
     }}>
       {children}
     </AppContext.Provider>

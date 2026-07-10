@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import logoSrc from "../../../assets/logo.png";
 
-
 import {
   Alert,
   Avatar,
@@ -264,6 +263,7 @@ export function Header({ onOpenSidebar }) {
                   minWidth: 36,
                   maxWidth: 36,
                   px: 0,
+                  border: "none",
                   borderRadius: "50%",
                 },
               }}
@@ -292,10 +292,6 @@ export function Header({ onOpenSidebar }) {
                     xs: "none",
                     sm: "block",
                   },
-
-                  "@media (min-width: 450px)": {
-                    display: "block",
-                  },
                   minWidth: 0,
                   maxWidth: "100%",
                   overflow: "hidden",
@@ -306,6 +302,9 @@ export function Header({ onOpenSidebar }) {
                     sm: 14,
                   },
                   lineHeight: 1.4,
+                  "@media (min-width: 450px)": {
+                    display: "block",
+                  },
                 }}
               >
                 {userEmailLabel}
