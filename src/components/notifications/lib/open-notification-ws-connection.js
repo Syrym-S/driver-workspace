@@ -1,7 +1,12 @@
+import { isStaging } from '../../../api/client';
 import { fetchNotificationWsTokenApi } from '../api/notifications-ws.api';
 import { bindNotificationWS, connectNotificationWS } from './notifications-ws';
 
-const DEFAULT_NOTIFICATION_WS_URL = 'wss://notification.360logistics.kz/socket';
+const NOTIFICATION_WS_BASE_URL = 'wss://notification.360logistics.kz';
+
+const DEFAULT_NOTIFICATION_WS_URL = isStaging
+    ? `${NOTIFICATION_WS_BASE_URL}/staging/socket`
+    : `${NOTIFICATION_WS_BASE_URL}/socket`;
 
 function getNotificationWsConfig() {
     const notificationConfig =

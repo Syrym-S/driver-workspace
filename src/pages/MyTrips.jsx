@@ -116,7 +116,7 @@ const MyTrips = () => {
             }}
         >
             <Typography variant='h5' sx={{ mb: 4 }}>
-                Мои поездки
+                Мои рейсы
             </Typography>
 
             <Box>

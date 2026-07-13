@@ -97,7 +97,6 @@ export function Header({ onOpenSidebar }) {
     } catch (error) {
       setLogoutError(
         error.response?.data?.message ||
-          error.response?.data?.error ||
           error.message ||
           "Не удалось выйти из аккаунта",
       );

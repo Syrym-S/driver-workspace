@@ -5,22 +5,67 @@ const NOTIFICATION_DOMAIN_EVENTS = {
     shipping: 'shipping:changed',
 };
 
+const NOTIFICATION_TYPE_ALIASES = {
+    leads: 'lead',
+    tenders: 'tender',
+
+    factoring: 'factor',
+    factorings: 'factor',
+
+    cargo: 'shipping',
+    shipment: 'shipping',
+    shipments: 'shipping',
+};
+
 const IGNORED_NOTIFICATION_TYPES = new Set(['total']);
 
 function normalizeNotificationType(type) {
     return String(type || '')
         .trim()
-        .toLowerCase();
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
 }
 
-export function getNotificationDomainEventName(notification) {
-    const type = normalizeNotificationType(notification?.type);
+function resolveNotificationDomainType(type) {
+    const normalizedType = normalizeNotificationType(type);
 
-    if (!type || IGNORED_NOTIFICATION_TYPES.has(type)) {
+    if (!normalizedType || IGNORED_NOTIFICATION_TYPES.has(normalizedType)) {
         return '';
     }
 
-    return NOTIFICATION_DOMAIN_EVENTS[type] || '';
+    const firstTypePart = normalizedType.split('.')[0];
+
+    return (
+        NOTIFICATION_DOMAIN_EVENTS[normalizedType] && normalizedType
+    ) || (
+        NOTIFICATION_DOMAIN_EVENTS[firstTypePart] && firstTypePart
+    ) || (
+        NOTIFICATION_TYPE_ALIASES[normalizedType]
+    ) || (
+        NOTIFICATION_TYPE_ALIASES[firstTypePart]
+    ) || '';
+}
+
+export function getNotificationDomainEventName(notification) {
+    const possibleTypes = [
+        notification?.type,
+        notification?.queue,
+        notification?.source,
+        notification?.event,
+        notification?.entity,
+        notification?.domain,
+    ];
+
+    for (const possibleType of possibleTypes) {
+        const domainType = resolveNotificationDomainType(possibleType);
+
+        if (domainType && NOTIFICATION_DOMAIN_EVENTS[domainType]) {
+            return NOTIFICATION_DOMAIN_EVENTS[domainType];
+        }
+    }
+
+    return '';
 }
 
 export function publishNotificationDomainEvent(notification) {

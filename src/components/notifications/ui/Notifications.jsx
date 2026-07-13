@@ -248,8 +248,14 @@ export function Notifications() {
                     ];
                 });
 
+                console.log('[Driver realtime notification]', notification);
                 notifyRealtimeNotification(notification);
-                publishNotificationDomainEvent(notification);
+                const isPublished = publishNotificationDomainEvent(notification);
+
+                console.log('[Driver notification domain event]', {
+                    type: notification.type,
+                    isPublished,
+                });
             },
         });
 

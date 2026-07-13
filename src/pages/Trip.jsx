@@ -269,9 +269,16 @@ const Trip = ({ activeId = null }) => {
         function handleShippingChanged(event) {
             const notification = event.detail;
 
+            console.log('[Trip shippingChanged event]', notification);
+
             if (!isNotificationAboutCurrentTrip(notification)) {
                 return;
             }
+
+            console.log('[Trip shippingChanged accepted]', {
+                id,
+                notification,
+            });
 
             fetchInfo({
                 withLoader: false,
